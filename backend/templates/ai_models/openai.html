@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OpenAI Chat</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        .container { max-width: 600px; margin: auto; }
+        .response, .error { margin-top: 1em; padding: 1em; border-radius: 5px; }
+        .response { background: #f0f8ff; }
+        .error { background: #ffe0e0; color: #a00; }
+        label, textarea, input { display: block; width: 100%; margin-top: 0.5em; }
+        textarea { height: 80px; }
+        button { margin-top: 1em; padding: 0.5em 1em; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>OpenAI Chat</h1>
+    <form method="post">
+        {% csrf_token %}
+        <label for="user_input">Your message:</label>
+        <textarea id="user_input" name="user_input">{{ input|default:'' }}</textarea>
+        <button type="submit">Send</button>
+    </form>
+
+    {% if response %}
+        <div class="response">
+            <strong>AI Response:</strong>
+            <p>{{ response }}</p>
+        </div>
+    {% endif %}
+
+    {% if error %}
+        <div class="error">
+            <strong>Error:</strong>
+            <p>{{ error }}</p>
+        </div>
+    {% endif %}
+</div>
+</body>
+</html>
