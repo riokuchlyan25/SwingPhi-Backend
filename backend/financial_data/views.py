@@ -1,9 +1,14 @@
-from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse, HttpResponse
+# internal
+from ai_models.config import FRED_API_KEY
+
+# external
 import requests
 
-FRED_API_KEY = 'YOUR_FRED_API_KEY'  # Placeholder key
+# built-in
+from django.shortcuts import render
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+
 FRED_BASE_URL = 'https://api.stlouisfed.org/fred/series/observations'
 
 # Helper to fetch FRED data
@@ -48,7 +53,6 @@ def fred_weekly_view(request):
 def fred_max_view(request):
     if request.method == 'POST':
         ticker = request.POST.get('ticker', '')
-        # For max, fetch all data (let's use 'd' for daily, which is the most granular)
         data = fetch_fred_data(ticker, 'd')
         return JsonResponse({'max': data})
     return JsonResponse({'error': 'POST required'}, status=400)
