@@ -1,0 +1,110 @@
+Watching for file changes with StatReloader
+Not Found: /ai_models/claude/
+[28/May/2025 20:13:39] "POST /ai_models/claude/ HTTP/1.1" 404 3402
+Internal Server Error: /claude/
+[28/May/2025 20:13:48] "POST /claude/ HTTP/1.1" 500 69
+/Users/riokuchlyan/Library/Mobile Documents/com~apple~CloudDocs/Files/Projects/Swing Phi Internship/Code Base/Backend/Backend/backend/ai_models/agent.py changed, reloading.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+May 28, 2025 - 20:13:35
+Django version 5.2.1, using settings 'backend.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CONTROL-C.
+
+WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+For more information on production servers see: https://docs.djangoproject.com/en/5.2/howto/deployment/
+Watching for file changes with StatReloader
+/Users/riokuchlyan/Library/Mobile Documents/com~apple~CloudDocs/Files/Projects/Swing Phi Internship/Code Base/Backend/Backend/backend/ai_models/agent.py changed, reloading.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+May 28, 2025 - 20:13:59
+Django version 5.2.1, using settings 'backend.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CONTROL-C.
+
+WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+For more information on production servers see: https://docs.djangoproject.com/en/5.2/howto/deployment/
+Watching for file changes with StatReloader
+Internal Server Error: /claude/
+[28/May/2025 20:14:09] "POST /claude/ HTTP/1.1" 500 409
+/Users/riokuchlyan/Library/Mobile Documents/com~apple~CloudDocs/Files/Projects/Swing Phi Internship/Code Base/Backend/Backend/backend/ai_models/agent.py changed, reloading.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+May 28, 2025 - 20:14:07
+Django version 5.2.1, using settings 'backend.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CONTROL-C.
+
+WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+For more information on production servers see: https://docs.djangoproject.com/en/5.2/howto/deployment/
+Watching for file changes with StatReloader
+/Users/riokuchlyan/Library/Mobile Documents/com~apple~CloudDocs/Files/Projects/Swing Phi Internship/Code Base/Backend/Backend/backend/ai_models/views.py changed, reloading.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+May 28, 2025 - 20:14:41
+Django version 5.2.1, using settings 'backend.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CONTROL-C.
+
+WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+For more information on production servers see: https://docs.djangoproject.com/en/5.2/howto/deployment/
+Watching for file changes with StatReloader
+/Users/riokuchlyan/Library/Mobile Documents/com~apple~CloudDocs/Files/Projects/Swing Phi Internship/Code Base/Backend/Backend/backend/ai_models/views.py changed, reloading.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+May 28, 2025 - 20:14:50
+Django version 5.2.1, using settings 'backend.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CONTROL-C.
+
+WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+For more information on production servers see: https://docs.djangoproject.com/en/5.2/howto/deployment/
+Watching for file changes with StatReloader
+[28/May/2025 20:15:00] "POST /claude/ HTTP/1.1" 200 318
+Internal Server Error: /claude/
+[28/May/2025 20:15:06] "POST /claude/ HTTP/1.1" 500 144
+[28/May/2025 20:15:15] "GET /claude/ HTTP/1.1" 200 5324
+[28/May/2025 20:15:38] "GET / HTTP/1.1" 200 1019
+Not Found: /favicon.ico
+[28/May/2025 20:15:38] "GET /favicon.ico HTTP/1.1" 404 3383
+Not Found: /ai_models/claude
+[28/May/2025 20:15:47] "GET /ai_models/claude HTTP/1.1" 404 3398
+[28/May/2025 20:15:57] "POST / HTTP/1.1" 200 185
+[28/May/2025 20:16:16] "GET /claude HTTP/1.1" 301 0
+[28/May/2025 20:16:16] "GET /claude/ HTTP/1.1" 200 5324
+[28/May/2025 20:16:20] "POST /claude/ HTTP/1.1" 200 318
+[28/May/2025 20:16:29] "GET / HTTP/1.1" 200 1019
+/Users/riokuchlyan/Library/Mobile Documents/com~apple~CloudDocs/Files/Projects/Swing Phi Internship/Code Base/Backend/Backend/backend/backend/urls.py changed, reloading.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+May 28, 2025 - 20:14:57
+Django version 5.2.1, using settings 'backend.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CONTROL-C.
+
+WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+For more information on production servers see: https://docs.djangoproject.com/en/5.2/howto/deployment/
+Watching for file changes with StatReloader
+/Users/riokuchlyan/Library/Mobile Documents/com~apple~CloudDocs/Files/Projects/Swing Phi Internship/Code Base/Backend/Backend/backend/ai_models/urls.py changed, reloading.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+May 28, 2025 - 20:16:58
+Django version 5.2.1, using settings 'backend.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CONTROL-C.
+
+WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+For more information on production servers see: https://docs.djangoproject.com/en/5.2/howto/deployment/
+Watching for file changes with StatReloader
+Not Found: /
+[28/May/2025 20:17:12] "GET / HTTP/1.1" 404 3079
+[28/May/2025 20:17:16] "GET /openai HTTP/1.1" 301 0
+[28/May/2025 20:17:16] "GET /openai/ HTTP/1.1" 200 1019
+[28/May/2025 20:17:22] "POST /openai/ HTTP/1.1" 200 213

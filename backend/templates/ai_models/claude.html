@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude AI - Stock Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+        .submit-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .submit-btn:hover {
+            background-color: #0056b3;
+        }
+        .submit-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .response-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .agent-status {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .agent-available {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .agent-unavailable {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .loading {
+            display: none;
+            color: #007bff;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Claude AI Stock Analysis</h1>
+        
+        <!-- Agent Status -->
+        {% if agent_available %}
+            <div class="agent-status agent-available">
+                ✅ LangGraph Databricks Agent is available and ready to use!
+            </div>
+        {% else %}
+            <div class="agent-status agent-unavailable">
+                ⚠️ LangGraph Databricks Agent is not available. 
+                {% if agent_error %}
+                    Error: {{ agent_error }}
+                {% endif %}
+                Falling back to standard Claude API.
+            </div>
+        {% endif %}
+        
+        <!-- Input Form -->
+        <form method="post" id="stockForm">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="user_input">Enter Stock Symbol or Company Name:</label>
+                <input type="text" 
+                       id="user_input" 
+                       name="user_input" 
+                       placeholder="e.g., AAPL, Tesla, Microsoft" 
+                       required
+                       value="{% if input %}{{ input }}{% endif %}">
+            </div>
+            
+            {% if agent_available %}
+            <div class="form-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="use_agent" name="use_agent" value="true">
+                    <label for="use_agent">Use LangGraph Databricks Agent (recommended)</label>
+                </div>
+            </div>
+            {% endif %}
+            
+            <button type="submit" class="submit-btn" id="submitBtn">
+                Analyze Stock
+            </button>
+            <div class="loading" id="loading">Processing your request...</div>
+        </form>
+        
+        <!-- Response Section -->
+        {% if response %}
+            <div class="response-section success">
+                <h3>Analysis Result:</h3>
+                <p><strong>Stock:</strong> {{ input }}</p>
+                {% if agent_used %}
+                    <p><em>Generated using LangGraph Databricks Agent</em></p>
+                {% else %}
+                    <p><em>Generated using standard Claude API</em></p>
+                {% endif %}
+                <div style="margin-top: 15px; line-height: 1.6;">
+                    {{ response }}
+                </div>
+            </div>
+        {% endif %}
+        
+        {% if error %}
+            <div class="response-section error">
+                <h3>Error:</h3>
+                <p>{{ error }}</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle form submission
+            document.getElementById('stockForm').addEventListener('submit', function(e) {
+                const submitBtn = document.getElementById('submitBtn');
+                const loading = document.getElementById('loading');
+                
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Processing...';
+                loading.style.display = 'block';
+            });
+
+            // Auto-check the agent checkbox if it exists (meaning agent is available)
+            const agentCheckbox = document.getElementById('use_agent');
+            if (agentCheckbox) {
+                agentCheckbox.checked = true;
+            }
+        });
+    </script>
+</body>
+</html> 

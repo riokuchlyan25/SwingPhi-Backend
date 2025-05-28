@@ -5,11 +5,22 @@ from .config import AZURE_OPENAI_KEY, MODEL_NAME, AZURE_OPENAI_ENDPOINT
 from openai import AzureOpenAI
 import anthropic
 import requests
+import uuid
 
 # built-in
 from django.http import JsonResponse
 from django.shortcuts import render, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+import json
+
+# Import the agent functionality
+try:
+    from .agent import AGENT
+    from mlflow.types.agent import ChatAgentMessage
+    AGENT_AVAILABLE = True
+except ImportError as e:
+    AGENT_AVAILABLE = False
+    AGENT_IMPORT_ERROR = str(e)
 
 # Create your views here.
 
@@ -39,7 +50,55 @@ def openai_view(request):
 @csrf_exempt
 def claude_view(request):
     if request.method == 'POST':
-        user_input = request.POST.get('user_input', '')
+        # Handle both form data and JSON data
+        if request.content_type == 'application/json':
+            try:
+                data = json.loads(request.body)
+                user_input = data.get('user_input', '')
+                use_agent = data.get('use_agent', False)
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        else:
+            user_input = request.POST.get('user_input', '')
+            use_agent = request.POST.get('use_agent', 'false').lower() == 'true'
+        
+        if not user_input:
+            return JsonResponse({'error': 'No input provided'}, status=400)
+        
+        # Use LangGraph Agent if available and requested
+        if use_agent and AGENT_AVAILABLE:
+            try:
+                # Create message for the agent
+                messages = [
+                    ChatAgentMessage(
+                        id=str(uuid.uuid4()),
+                        role="user", 
+                        content=f"Give me a short stock analysis of the following stock (ensure the analysis is concise and to the point with no special characters just punctuation and the alphabet. do not list out its metrics but rather give me a 5 sentence paragraph analysis. mention unique and insightful details not just its basic facts such as location, industry, etc. do not use special characters or markdown formatting such as * or _. THE RESPONSE MUST BE IN PLAIN TEXT AND LESS THAN 130 WORDS. do not use an astricks or number sign either): {user_input}"
+                    )
+                ]
+                
+                # Get response from agent
+                response = AGENT.predict(messages)
+                
+                # Extract the response content
+                if response.messages and len(response.messages) > 0:
+                    ai_response = response.messages[-1].content
+                else:
+                    ai_response = "No response generated from agent"
+                
+                return JsonResponse({
+                    'response': ai_response,
+                    'input': user_input,
+                    'agent_used': True
+                })
+                
+            except Exception as e:
+                return JsonResponse({
+                    'error': f'Agent error: {str(e)}',
+                    'agent_used': True
+                }, status=500)
+        
+        # Fallback to standard Claude API
         claude_api_key = 'YOUR_ANTHROPIC_API_KEY'
         try:
             client = anthropic.Client(api_key=claude_api_key)
@@ -51,7 +110,35 @@ def claude_view(request):
                 ]
             )
             ai_response = response.content[0].text
-            return render(request, 'ai_models/claude.html', {'response': ai_response, 'input': user_input})
+            
+            if request.content_type == 'application/json':
+                return JsonResponse({
+                    'response': ai_response,
+                    'input': user_input,
+                    'agent_used': False
+                })
+            else:
+                return render(request, 'ai_models/claude.html', {
+                    'response': ai_response, 
+                    'input': user_input,
+                    'agent_available': AGENT_AVAILABLE
+                })
+                
         except Exception as e:
-            return render(request, 'ai_models/claude.html', {'error': str(e)})
-    return render(request, 'ai_models/claude.html')
+            error_msg = str(e)
+            if request.content_type == 'application/json':
+                return JsonResponse({
+                    'error': error_msg,
+                    'agent_used': False
+                }, status=500)
+            else:
+                return render(request, 'ai_models/claude.html', {
+                    'error': error_msg,
+                    'agent_available': AGENT_AVAILABLE
+                })
+    
+    # GET request - show the form
+    return render(request, 'ai_models/claude.html', {
+        'agent_available': AGENT_AVAILABLE,
+        'agent_error': AGENT_IMPORT_ERROR if not AGENT_AVAILABLE else None
+    })
