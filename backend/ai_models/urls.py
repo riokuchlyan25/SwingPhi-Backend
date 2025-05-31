@@ -4,5 +4,4 @@ from . import views
 urlpatterns = [
     path('openai/', views.openai_view, name='openai'),
     path('claude/', views.claude_view, name='claude'),
-    path('agent/', views.claude_view, name='agent'),  # Same view, different URL for clarity
 ]

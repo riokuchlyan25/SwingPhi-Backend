@@ -1,5 +1,5 @@
 # internal
-from .config import AZURE_OPENAI_KEY, MODEL_NAME, AZURE_OPENAI_ENDPOINT
+from ai_models.config import AZURE_OPENAI_KEY, MODEL_NAME, AZURE_OPENAI_ENDPOINT
 
 # external
 from openai import AzureOpenAI
@@ -50,7 +50,6 @@ def openai_view(request):
 @csrf_exempt
 def claude_view(request):
     if request.method == 'POST':
-        # Handle both form data and JSON data
         if request.content_type == 'application/json':
             try:
                 data = json.loads(request.body)
@@ -65,10 +64,8 @@ def claude_view(request):
         if not user_input:
             return JsonResponse({'error': 'No input provided'}, status=400)
         
-        # Use LangGraph Agent if available and requested
         if use_agent and AGENT_AVAILABLE:
             try:
-                # Create message for the agent
                 messages = [
                     ChatAgentMessage(
                         id=str(uuid.uuid4()),
@@ -77,10 +74,8 @@ def claude_view(request):
                     )
                 ]
                 
-                # Get response from agent
                 response = AGENT.predict(messages)
                 
-                # Extract the response content
                 if response.messages and len(response.messages) > 0:
                     ai_response = response.messages[-1].content
                 else:
@@ -98,7 +93,6 @@ def claude_view(request):
                     'agent_used': True
                 }, status=500)
         
-        # Fallback to standard Claude API
         claude_api_key = 'YOUR_ANTHROPIC_API_KEY'
         try:
             client = anthropic.Client(api_key=claude_api_key)
@@ -137,7 +131,6 @@ def claude_view(request):
                     'agent_available': AGENT_AVAILABLE
                 })
     
-    # GET request - show the form
     return render(request, 'ai_models/claude.html', {
         'agent_available': AGENT_AVAILABLE,
         'agent_error': AGENT_IMPORT_ERROR if not AGENT_AVAILABLE else None
