@@ -1,5 +1,5 @@
 # internal
-from financial_data.config import FRED_API_KEY, PHI_RESEARCH_CHARLES_SCHWAB_KEY, PHI_RESEARCH_CHARLES_SCHWAB_SECRET
+from financial_data.config import FRED_API_KEY, PHI_RESEARCH_CHARLES_SCHWAB_KEY, PHI_RESEARCH_CHARLES_SCHWAB_SECRET 
 
 # external
 import requests
