@@ -22,12 +22,23 @@ except ImportError as e:
     AGENT_AVAILABLE = False
     AGENT_IMPORT_ERROR = str(e)
 
-# Create your views here.
-
+# API Endpoints (POST only)
 @csrf_exempt
-def openai_view(request):
+def openai_api(request):
+    """OpenAI API endpoint - POST requests only"""
     if request.method == 'POST':
-        user_input = request.body.decode('utf-8')
+        if request.content_type == 'application/json':
+            try:
+                data = json.loads(request.body)
+                user_input = data.get('user_input', '')
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        else:
+            user_input = request.POST.get('user_input', '') or request.body.decode('utf-8')
+        
+        if not user_input:
+            return JsonResponse({'error': 'No input provided'}, status=400)
+        
         try:
             client = AzureOpenAI(
                 api_key=AZURE_OPENAI_KEY,
@@ -41,14 +52,26 @@ def openai_view(request):
                 ]
             )
             ai_response = response.choices[0].message.content
-            return HttpResponse(ai_response, content_type='text/plain')
+            
+            if request.content_type == 'application/json':
+                return JsonResponse({
+                    'response': ai_response,
+                    'input': user_input
+                })
+            else:
+                return HttpResponse(ai_response, content_type='text/plain')
+                
         except Exception as e:
-            return HttpResponse(str(e), content_type='text/plain', status=500)
+            if request.content_type == 'application/json':
+                return JsonResponse({'error': str(e)}, status=500)
+            else:
+                return HttpResponse(str(e), content_type='text/plain', status=500)
 
-    return render(request, 'ai_models/openai.html')
+    return JsonResponse({'error': 'POST required'}, status=400)
 
 @csrf_exempt
-def claude_view(request):
+def claude_api(request):
+    """Claude API endpoint - POST requests only"""
     if request.method == 'POST':
         if request.content_type == 'application/json':
             try:
@@ -105,32 +128,27 @@ def claude_view(request):
             )
             ai_response = response.content[0].text
             
-            if request.content_type == 'application/json':
-                return JsonResponse({
-                    'response': ai_response,
-                    'input': user_input,
-                    'agent_used': False
-                })
-            else:
-                return render(request, 'ai_models/claude.html', {
-                    'response': ai_response, 
-                    'input': user_input,
-                    'agent_available': AGENT_AVAILABLE
-                })
+            return JsonResponse({
+                'response': ai_response,
+                'input': user_input,
+                'agent_used': False
+            })
                 
         except Exception as e:
-            error_msg = str(e)
-            if request.content_type == 'application/json':
-                return JsonResponse({
-                    'error': error_msg,
-                    'agent_used': False
-                }, status=500)
-            else:
-                return render(request, 'ai_models/claude.html', {
-                    'error': error_msg,
-                    'agent_available': AGENT_AVAILABLE
-                })
+            return JsonResponse({
+                'error': str(e),
+                'agent_used': False
+            }, status=500)
     
+    return JsonResponse({'error': 'POST required'}, status=400)
+
+# Template Views (GET requests)
+def openai_template(request):
+    """Render OpenAI testing template"""
+    return render(request, 'ai_models/openai.html')
+
+def claude_template(request):
+    """Render Claude testing template"""
     return render(request, 'ai_models/claude.html', {
         'agent_available': AGENT_AVAILABLE,
         'agent_error': AGENT_IMPORT_ERROR if not AGENT_AVAILABLE else None

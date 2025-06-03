@@ -19,6 +19,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('ai_models.urls')),  # AI models at root level
+    path('ai_models/', include('ai_models.urls')),  # AI models under /ai_models/
     path('financial_data/', include('financial_data.urls')),
 ]

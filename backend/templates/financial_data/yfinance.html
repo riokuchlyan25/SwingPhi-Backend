@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>YFinance Stock Data</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        .container { max-width: 800px; margin: auto; }
+        .form-section { margin-bottom: 2em; padding: 1em; border: 1px solid #ddd; border-radius: 5px; }
+        .response, .error { margin-top: 1em; padding: 1em; border-radius: 5px; }
+        .response { background: #f0f8ff; }
+        .error { background: #ffe0e0; color: #a00; }
+        label, input, select { display: block; width: 100%; margin-top: 0.5em; }
+        button { margin-top: 1em; padding: 0.5em 1em; }
+        .data-display { max-height: 400px; overflow-y: auto; background: #f9f9f9; padding: 1em; margin-top: 1em; }
+        .button-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .button-group button { flex: 1; min-width: 120px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>YFinance Stock Data</h1>
+    
+    <div class="form-section">
+        <h3>Get Stock Data</h3>
+        <form id="stockForm">
+            {% csrf_token %}
+            <label for="ticker">Stock Ticker (e.g., AAPL, TSLA, MSFT):</label>
+            <input type="text" id="ticker" name="ticker" value="{{ ticker|default:'AAPL' }}" required>
+            
+            <div class="button-group">
+                <button type="button" onclick="fetchData('daily')">5 Days Daily</button>
+                <button type="button" onclick="fetchData('weekly')">1 Year Weekly</button>
+                <button type="button" onclick="fetchData('monthly')">5 Years Monthly</button>
+                <button type="button" onclick="fetchData('yearly')">Max Yearly</button>
+                <button type="button" onclick="fetchData('max')">Max Daily</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="form-section">
+        <h3>Custom Period</h3>
+        <form id="customForm">
+            {% csrf_token %}
+            <label for="custom_ticker">Stock Ticker:</label>
+            <input type="text" id="custom_ticker" name="ticker" value="{{ ticker|default:'AAPL' }}" required>
+            
+            <label for="period">Period:</label>
+            <select id="period" name="period">
+                <option value="1d">1 Day</option>
+                <option value="5d">5 Days</option>
+                <option value="1mo" selected>1 Month</option>
+                <option value="3mo">3 Months</option>
+                <option value="6mo">6 Months</option>
+                <option value="1y">1 Year</option>
+                <option value="2y">2 Years</option>
+                <option value="5y">5 Years</option>
+                <option value="10y">10 Years</option>
+                <option value="ytd">Year to Date</option>
+                <option value="max">Max</option>
+            </select>
+            
+            <label for="interval">Interval:</label>
+            <select id="interval" name="interval">
+                <option value="1m">1 Minute</option>
+                <option value="2m">2 Minutes</option>
+                <option value="5m">5 Minutes</option>
+                <option value="15m">15 Minutes</option>
+                <option value="30m">30 Minutes</option>
+                <option value="60m">60 Minutes</option>
+                <option value="90m">90 Minutes</option>
+                <option value="1h">1 Hour</option>
+                <option value="1d" selected>1 Day</option>
+                <option value="5d">5 Days</option>
+                <option value="1wk">1 Week</option>
+                <option value="1mo">1 Month</option>
+                <option value="3mo">3 Months</option>
+            </select>
+            
+            <button type="button" onclick="fetchCustomData()">Get Custom Data</button>
+        </form>
+    </div>
+
+    <div id="response-container"></div>
+</div>
+
+<script>
+async function fetchData(period) {
+    const ticker = document.getElementById('ticker').value;
+    const responseContainer = document.getElementById('response-container');
+    
+    if (!ticker) {
+        responseContainer.innerHTML = '<div class="error">Please enter a ticker symbol</div>';
+        return;
+    }
+    
+    try {
+        responseContainer.innerHTML = '<div>Loading...</div>';
+        
+        const formData = new FormData();
+        formData.append('ticker', ticker);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        const response = await fetch(`/financial_data/yfinance/${period}/`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            responseContainer.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+        } else {
+            const dataKey = Object.keys(data)[0];
+            const stockData = data[dataKey];
+            responseContainer.innerHTML = `
+                <div class="response">
+                    <strong>${period.toUpperCase()} Data for ${ticker.toUpperCase()}:</strong>
+                    <div class="data-display">
+                        <pre>${JSON.stringify(stockData.slice(0, 10), null, 2)}</pre>
+                        ${stockData.length > 10 ? `<p>... and ${stockData.length - 10} more records</p>` : ''}
+                        <p><strong>Total Records:</strong> ${stockData.length}</p>
+                    </div>
+                </div>
+            `;
+        }
+    } catch (error) {
+        responseContainer.innerHTML = `<div class="error">Network Error: ${error.message}</div>`;
+    }
+}
+
+async function fetchCustomData() {
+    const ticker = document.getElementById('custom_ticker').value;
+    const period = document.getElementById('period').value;
+    const interval = document.getElementById('interval').value;
+    const responseContainer = document.getElementById('response-container');
+    
+    if (!ticker) {
+        responseContainer.innerHTML = '<div class="error">Please enter a ticker symbol</div>';
+        return;
+    }
+    
+    try {
+        responseContainer.innerHTML = '<div>Loading...</div>';
+        
+        const formData = new FormData();
+        formData.append('ticker', ticker);
+        formData.append('period', period);
+        formData.append('interval', interval);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        const response = await fetch('/financial_data/yfinance/custom/', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.error) {
+            responseContainer.innerHTML = `<div class="error">Error: ${result.error}</div>`;
+        } else {
+            const stockData = JSON.parse(result.data);
+            responseContainer.innerHTML = `
+                <div class="response">
+                    <strong>Custom Data for ${ticker.toUpperCase()} (${period}, ${interval}):</strong>
+                    <div class="data-display">
+                        <pre>${JSON.stringify(stockData.slice(0, 10), null, 2)}</pre>
+                        ${stockData.length > 10 ? `<p>... and ${stockData.length - 10} more records</p>` : ''}
+                        <p><strong>Total Records:</strong> ${stockData.length}</p>
+                    </div>
+                </div>
+            `;
+        }
+    } catch (error) {
+        responseContainer.innerHTML = `<div class="error">Network Error: ${error.message}</div>`;
+    }
+}
+</script>
+</body>
+</html> 
