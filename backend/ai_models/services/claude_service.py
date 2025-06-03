@@ -1,0 +1,91 @@
+# internal
+from ai_models.config import ANTHROPIC_API_KEY, ANTHROPIC_ENDPOINT
+
+# external
+import anthropic
+import uuid
+
+# built-in
+from django.http import JsonResponse
+import json
+
+# Import the agent functionality
+try:
+    from .agent import AGENT
+    from mlflow.types.agent import ChatAgentMessage
+    AGENT_AVAILABLE = True
+except ImportError as e:
+    AGENT_AVAILABLE = False
+    AGENT_IMPORT_ERROR = str(e)
+
+def claude_api(request):
+    """Claude API endpoint - POST requests only"""
+    if request.method == 'POST':
+        if request.content_type == 'application/json':
+            try:
+                data = json.loads(request.body)
+                user_input = data.get('user_input', '')
+                use_agent = data.get('use_agent', False)
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        else:
+            user_input = request.POST.get('user_input', '')
+            use_agent = request.POST.get('use_agent', 'false').lower() == 'true'
+        
+        if not user_input:
+            return JsonResponse({'error': 'No input provided'}, status=400)
+        
+        if use_agent and AGENT_AVAILABLE:
+            try:
+                messages = [
+                    ChatAgentMessage(
+                        id=str(uuid.uuid4()),
+                        role="user", 
+                        content=f"Give me a short stock analysis of the following stock (ensure the analysis is concise and to the point with no special characters just punctuation and the alphabet. do not list out its metrics but rather give me a 5 sentence paragraph analysis. mention unique and insightful details not just its basic facts such as location, industry, etc. do not use special characters or markdown formatting such as * or _. THE RESPONSE MUST BE IN PLAIN TEXT AND LESS THAN 130 WORDS. do not use an astricks or number sign either): {user_input}"
+                    )
+                ]
+                
+                response = AGENT.predict(messages)
+                
+                if response.messages and len(response.messages) > 0:
+                    ai_response = response.messages[-1].content
+                else:
+                    ai_response = "No response generated from agent"
+                
+                return JsonResponse({
+                    'response': ai_response,
+                    'input': user_input,
+                    'agent_used': True
+                })
+                
+            except Exception as e:
+                return JsonResponse({
+                    'error': f'Agent error: {str(e)}',
+                    'agent_used': True
+                }, status=500)
+        
+        claude_api_key = 'YOUR_ANTHROPIC_API_KEY'
+        try:
+            client = anthropic.Client(api_key=claude_api_key)
+            response = client.messages.create(
+                model="claude-3-opus-20240229",
+                max_tokens=1000,
+                messages=[
+                    {"role": "user", "content": "Give me a short stock analysis of the following stock (ensure the analysis is concise and to the point with no special characters just punctuation and the alphabet. do not list out its metrics but rather give me a 5 sentence paragraph analysis. mention unique and insightful details not just its basic facts such as location, industry, etc. do not use special characters or markdown formatting such as * or _. THE RESPONSE MUST BE IN PLAIN TEXT AND LESS THAN 130 WORDS. do not use an astricks or number sign either): " + user_input}
+                ]
+            )
+            ai_response = response.content[0].text
+            
+            return JsonResponse({
+                'response': ai_response,
+                'input': user_input,
+                'agent_used': False
+            })
+                
+        except Exception as e:
+            return JsonResponse({
+                'error': str(e),
+                'agent_used': False
+            }, status=500)
+    
+    return JsonResponse({'error': 'POST required'}, status=400)

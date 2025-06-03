@@ -3,8 +3,8 @@ from . import views
 
 urlpatterns = [
     # API Endpoints (POST only)
-    path('openai/', views.openai_api, name='openai_api'),
-    path('claude/', views.claude_api, name='claude_api'),
+    path('openai/', views.openai_view, name='openai_view'),
+    path('claude/', views.claude_view, name='claude_view'),
     
     # Testing template interfaces
     path('test/openai/', views.openai_template, name='openai_template'),

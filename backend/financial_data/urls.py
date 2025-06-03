@@ -16,7 +16,6 @@ urlpatterns = [
     path('yfinance/monthly/', views.yfinance_monthly_view, name='yfinance_monthly'),
     path('yfinance/yearly/', views.yfinance_yearly_view, name='yfinance_yearly'),
     path('yfinance/max/', views.yfinance_max_view, name='yfinance_max'),
-    path('yfinance/custom/', views.save_close_values_to_json, name='yfinance_custom'),
     # Testing template interfaces
     path('test/yfinance/', views.yfinance_template, name='yfinance_template'),
     path('test/fred/', views.fred_template, name='fred_template'),
