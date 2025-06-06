@@ -21,4 +21,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('ai_models/', include('ai_models.urls')),  # AI models under /ai_models/
     path('financial_data/', include('financial_data.urls')),
+    path('news_data/', include('news_data.urls')),
 ]

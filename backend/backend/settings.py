@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'ai_models',
     'financial_data',
+    'news_data',
     'corsheaders',
 ]
 
