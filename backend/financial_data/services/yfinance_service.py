@@ -21,6 +21,74 @@ def get_ticker_from_request(request):
             ticker = ''
     return ticker
 
+def yfinance_price_change_api(request):
+    """Get price change analysis for a stock"""
+    if request.method == 'POST':
+        ticker = get_ticker_from_request(request)
+        if not ticker:
+            return JsonResponse({'error': 'Ticker required'}, status=400)
+        
+        try:
+            data = yfinance_price_change_data(ticker)
+            return JsonResponse(data)
+        except Exception as e:
+            return JsonResponse({'error': f'Failed to fetch price change data: {str(e)}'}, status=500)
+    return JsonResponse({'error': 'POST required'}, status=400)
+
+def yfinance_price_change_data(ticker: str) -> dict:
+    """Analyze price change for a stock ticker"""
+    try:
+        stock = yf.Ticker(ticker)
+        
+        # Get recent data (last 5 days to ensure we have at least 2 trading days)
+        df = stock.history(period="5d", interval="1d")
+        
+        if len(df) < 2:
+            return {
+                'error': 'Insufficient data available for this ticker',
+                'ticker': ticker
+            }
+        
+        # Get the two most recent trading days
+        latest_price = df['Close'].iloc[-1]
+        previous_price = df['Close'].iloc[-2]
+        latest_date = df.index[-1].strftime("%Y-%m-%d")
+        previous_date = df.index[-2].strftime("%Y-%m-%d")
+        
+        # Calculate changes
+        price_change = latest_price - previous_price
+        percentage_change = (price_change / previous_price) * 100
+        
+        # Determine direction
+        if price_change > 0:
+            direction = "UP"
+            direction_symbol = "↗"
+        elif price_change < 0:
+            direction = "DOWN"
+            direction_symbol = "↘"
+        else:
+            direction = "UNCHANGED"
+            direction_symbol = "→"
+        
+        return {
+            'ticker': ticker.upper(),
+            'direction': direction,
+            'direction_symbol': direction_symbol,
+            'price_change': round(price_change, 2),
+            'percentage_change': round(percentage_change, 2),
+            'current_price': round(latest_price, 2),
+            'previous_price': round(previous_price, 2),
+            'current_date': latest_date,
+            'previous_date': previous_date,
+            'summary': f"{ticker.upper()} went {direction} by ${abs(round(price_change, 2))} ({abs(round(percentage_change, 2))}%) from {previous_date} to {latest_date}"
+        }
+        
+    except Exception as e:
+        return {
+            'error': f'Failed to analyze price change: {str(e)}',
+            'ticker': ticker
+        }
+
 def yfinance_daily_api(request):
     """Get daily stock data for the past 5 days"""
     if request.method == 'POST':

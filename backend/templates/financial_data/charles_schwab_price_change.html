@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Charles Schwab Price Change Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+        .result.up {
+            background-color: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        .result.down {
+            background-color: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        .result.unchanged {
+            background-color: #e2e3e5;
+            border-color: #6c757d;
+            color: #383d41;
+        }
+        .result.error {
+            background-color: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        .price-display {
+            font-size: 2em;
+            font-weight: bold;
+            text-align: center;
+            margin: 15px 0;
+        }
+        .direction-symbol {
+            font-size: 3em;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .summary {
+            font-size: 1.2em;
+            text-align: center;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        .details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .detail-item {
+            text-align: center;
+            padding: 10px;
+            background-color: rgba(255,255,255,0.7);
+            border-radius: 5px;
+        }
+        .detail-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .detail-value {
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        .info {
+            background-color: #e2e3e5;
+            border: 1px solid #d6d8db;
+            color: #383d41;
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .loading {
+            display: none;
+            color: #007bff;
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .ticker-display {
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Charles Schwab Price Change Analysis</h1>
+        
+        <div class="info">
+            <strong>Instructions:</strong><br>
+            Enter a stock symbol and your Charles Schwab access token to analyze price changes from the previous trading day.<br>
+            Examples: AAPL, MSFT, GOOGL, TSLA, AMZN, NVDA<br>
+            This compares the most recent closing price with the previous trading day using Charles Schwab data.
+        </div>
+
+        <form id="priceChangeForm">
+            <div class="form-group">
+                <label for="symbol">Stock Symbol:</label>
+                <input type="text" id="symbol" name="symbol" placeholder="e.g., AAPL" required>
+            </div>
+            <div class="form-group">
+                <label for="access_token">Access Token:</label>
+                <input type="text" id="access_token" name="access_token" placeholder="Your Charles Schwab access token" required>
+            </div>
+            <button type="submit">Analyze Price Change</button>
+        </form>
+
+        <div class="loading" id="loading">Analyzing price change...</div>
+        <div id="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        document.getElementById('priceChangeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const symbol = document.getElementById('symbol').value.toUpperCase();
+            const access_token = document.getElementById('access_token').value;
+            const resultDiv = document.getElementById('result');
+            const loadingDiv = document.getElementById('loading');
+            
+            if (!symbol || !access_token) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = '<div class="summary">Please fill in all fields</div>';
+                resultDiv.style.display = 'block';
+                return;
+            }
+            
+            loadingDiv.style.display = 'block';
+            resultDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('/financial_data/charles_schwab/price_change/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        symbol: symbol,
+                        access_token: access_token
+                    })
+                });
+                
+                const data = await response.json();
+                
+                loadingDiv.style.display = 'none';
+                resultDiv.style.display = 'block';
+                
+                if (response.ok && !data.error) {
+                    let directionClass = 'unchanged';
+                    if (data.direction === 'UP') directionClass = 'up';
+                    else if (data.direction === 'DOWN') directionClass = 'down';
+                    
+                    resultDiv.className = `result ${directionClass}`;
+                    resultDiv.innerHTML = `
+                        <div class="ticker-display">${data.symbol}</div>
+                        <div class="direction-symbol">${data.direction_symbol}</div>
+                        <div class="price-display">$${data.current_price}</div>
+                        <div class="summary">${data.summary}</div>
+                        <div class="details">
+                            <div class="detail-item">
+                                <div class="detail-label">Price Change</div>
+                                <div class="detail-value">$${data.price_change}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Percentage Change</div>
+                                <div class="detail-value">${data.percentage_change}%</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Previous Price (${data.previous_date})</div>
+                                <div class="detail-value">$${data.previous_price}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Current Price (${data.current_date})</div>
+                                <div class="detail-value">$${data.current_price}</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `<div class="summary">Error: ${data.error || 'Failed to analyze price change'}</div>`;
+                }
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<div class="summary">Error: ${error.message}</div>`;
+            }
+        });
+
+        // Auto-focus on symbol input
+        document.getElementById('symbol').focus();
+        
+        // Convert input to uppercase
+        document.getElementById('symbol').addEventListener('input', function(e) {
+            e.target.value = e.target.value.toUpperCase();
+        });
+    </script>
+</body>
+</html> 
