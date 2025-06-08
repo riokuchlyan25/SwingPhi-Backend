@@ -1,27 +1,45 @@
 # internal
-from news_data.services.news_service import get_top_headlines
+from news_data.services.news_service import (
+    get_news_headlines,
+    get_news_headlines_template_context,
+    get_news_test_dashboard_context,
+    get_news_test_index_context
+)
 
 # external
 
 # built-in
 from django.shortcuts import render
-from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-import json
 
 @csrf_exempt
 def news_api_view(request):
-    if request.method == 'POST':
-        # Try to get query from JSON body first
-        try:
-            data = json.loads(request.body)
-            query = data.get('query', '')
-        except json.JSONDecodeError:
-            # Fall back to form data
-            query = request.POST.get('query', '')
-        
-        if not query:
-            return JsonResponse({'error': 'query parameter is required'}, status=400)
-            
-        return get_top_headlines(query)
-    return JsonResponse({'error': 'POST required'}, status=400)
+    """
+    Handler for news headlines API endpoint
+    Delegates all business logic to the service layer
+    """
+    return get_news_headlines(request)
+
+def news_headlines_template(request):
+    """
+    Handler for news headlines template view
+    Delegates context generation to the service layer
+    """
+    context = get_news_headlines_template_context()
+    return render(request, 'news_data/news_headlines.html', context)
+
+def news_test_dashboard(request):
+    """
+    Handler for news test dashboard view
+    Delegates context generation to the service layer
+    """
+    context = get_news_test_dashboard_context()
+    return render(request, 'news_data/news_test_dashboard.html', context)
+
+def news_test_index(request):
+    """
+    Handler for news test index view
+    Delegates context generation to the service layer
+    """
+    context = get_news_test_index_context()
+    return render(request, 'news_data/news_test_index.html', context)
