@@ -1,6 +1,7 @@
 # internal
 from news_data.services.news_service import (
     get_news_headlines,
+    get_financial_news,
     get_news_headlines_template_context,
     get_news_test_dashboard_context,
     get_news_test_index_context
@@ -19,6 +20,14 @@ def news_api_view(request):
     Delegates all business logic to the service layer
     """
     return get_news_headlines(request)
+
+@csrf_exempt
+def financial_news_view(request):
+    """
+    Handler for financial news API endpoint
+    Delegates all business logic to the service layer
+    """
+    return get_financial_news(request)
 
 def news_headlines_template(request):
     """

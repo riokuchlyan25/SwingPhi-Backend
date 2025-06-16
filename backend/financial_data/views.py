@@ -6,7 +6,13 @@ from financial_data.services.charles_schwab_service import (
 )
 from financial_data.services.fred_service import (
     fred_yearly_api, fred_monthly_api, fred_weekly_api, fred_max_api,
-    fred_economic_indicators_api, fred_market_events_api, fred_cpi_detailed_api
+    fred_economic_indicators_api, fred_market_events_api, fred_cpi_detailed_api,
+    fred_money_banking_api, fred_employment_labor_api, fred_price_commodities_api,
+    fred_international_data_api, fred_national_accounts_api, fred_academic_research_api,
+    fred_housing_real_estate_api, fred_manufacturing_industrial_api,
+    fred_healthcare_indexes_api, fred_education_productivity_api, fred_trade_transportation_api,
+    fred_income_demographics_api, fred_cryptocurrency_fintech_api, fred_historical_academic_api,
+    fred_sector_specific_api
 )
 from financial_data.services.yfinance_service import yfinance_daily_api, yfinance_weekly_api, yfinance_yearly_api, yfinance_max_api, yfinance_monthly_api, yfinance_price_change_api
 
@@ -43,6 +49,66 @@ def fred_market_events_view(request):
 @csrf_exempt
 def fred_cpi_detailed_view(request):
     return fred_cpi_detailed_api(request)
+
+@csrf_exempt
+def fred_money_banking_view(request):
+    return fred_money_banking_api(request)
+
+@csrf_exempt
+def fred_employment_labor_view(request):
+    return fred_employment_labor_api(request)
+
+@csrf_exempt
+def fred_price_commodities_view(request):
+    return fred_price_commodities_api(request)
+
+@csrf_exempt
+def fred_international_data_view(request):
+    return fred_international_data_api(request)
+
+@csrf_exempt
+def fred_national_accounts_view(request):
+    return fred_national_accounts_api(request)
+
+@csrf_exempt
+def fred_academic_research_view(request):
+    return fred_academic_research_api(request)
+
+@csrf_exempt
+def fred_housing_real_estate_view(request):
+    return fred_housing_real_estate_api(request)
+
+@csrf_exempt
+def fred_manufacturing_industrial_view(request):
+    return fred_manufacturing_industrial_api(request)
+
+@csrf_exempt
+def fred_healthcare_indexes_view(request):
+    return fred_healthcare_indexes_api(request)
+
+@csrf_exempt
+def fred_education_productivity_view(request):
+    return fred_education_productivity_api(request)
+
+@csrf_exempt
+def fred_trade_transportation_view(request):
+    return fred_trade_transportation_api(request)
+
+@csrf_exempt
+def fred_income_demographics_view(request):
+    return fred_income_demographics_api(request)
+
+@csrf_exempt
+def fred_cryptocurrency_fintech_view(request):
+    return fred_cryptocurrency_fintech_api(request)
+
+@csrf_exempt
+def fred_historical_academic_view(request):
+    return fred_historical_academic_api(request)
+
+@csrf_exempt
+def fred_sector_specific_view(request):
+    return fred_sector_specific_api(request)
 
 @csrf_exempt
 def charles_schwab_view(request):

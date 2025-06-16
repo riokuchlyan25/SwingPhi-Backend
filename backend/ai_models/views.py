@@ -1,5 +1,5 @@
 # internal
-from ai_models.services.openai_service import openai_api
+from ai_models.services.openai_service import openai_api, phi_confidence_api
 from ai_models.services.claude_service import claude_api
 
 # external
@@ -24,6 +24,10 @@ def openai_view(request):
 @csrf_exempt
 def claude_view(request):
     return claude_api(request)
+
+@csrf_exempt
+def phi_confidence_view(request):
+    return phi_confidence_api(request)
 
 # Template Views (GET requests)
 def openai_template(request):
