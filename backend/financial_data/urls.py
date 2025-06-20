@@ -46,6 +46,12 @@ urlpatterns = [
     path('yfinance/yearly/', views.yfinance_yearly_view, name='yfinance_yearly'),
     path('yfinance/max/', views.yfinance_max_view, name='yfinance_max'),
     path('yfinance/price_change/', views.yfinance_price_change_view, name='yfinance_price_change'),
+    # Polygon endpoints for crypto data
+    path('polygon/crypto/daily/', views.polygon_crypto_daily_view, name='polygon_crypto_daily'),
+    path('polygon/crypto/weekly/', views.polygon_crypto_weekly_view, name='polygon_crypto_weekly'),
+    path('polygon/crypto/monthly/', views.polygon_crypto_monthly_view, name='polygon_crypto_monthly'),
+    path('polygon/crypto/price_change/', views.polygon_crypto_price_change_view, name='polygon_crypto_price_change'),
+    path('polygon/crypto/real_time/', views.polygon_crypto_real_time_view, name='polygon_crypto_real_time'),
     # Testing template interfaces
     path('test/yfinance/', views.yfinance_template, name='yfinance_template'),
     path('test/fred/', views.fred_template, name='fred_template'),

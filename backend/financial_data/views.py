@@ -15,6 +15,10 @@ from financial_data.services.fred_service import (
     fred_sector_specific_api
 )
 from financial_data.services.yfinance_service import yfinance_daily_api, yfinance_weekly_api, yfinance_yearly_api, yfinance_max_api, yfinance_monthly_api, yfinance_price_change_api
+from financial_data.services.polygon_service import (
+    polygon_crypto_daily_api, polygon_crypto_weekly_api, polygon_crypto_monthly_api,
+    polygon_crypto_price_change_api, polygon_crypto_real_time_api
+)
 
 # external
 
@@ -173,6 +177,26 @@ def yfinance_monthly_view(request):
 @csrf_exempt
 def yfinance_price_change_view(request):
     return yfinance_price_change_api(request)
+
+@csrf_exempt
+def polygon_crypto_daily_view(request):
+    return polygon_crypto_daily_api(request)
+
+@csrf_exempt
+def polygon_crypto_weekly_view(request):
+    return polygon_crypto_weekly_api(request)
+
+@csrf_exempt
+def polygon_crypto_monthly_view(request):
+    return polygon_crypto_monthly_api(request)
+
+@csrf_exempt
+def polygon_crypto_price_change_view(request):
+    return polygon_crypto_price_change_api(request)
+
+@csrf_exempt
+def polygon_crypto_real_time_view(request):
+    return polygon_crypto_real_time_api(request)
 
 # Template views for testing interfaces
 def yfinance_template(request):

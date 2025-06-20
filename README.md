@@ -50,32 +50,32 @@ curl -X GET "http://localhost:8000/financial_data/charles_schwab/"
 ### Charles Schwab Daily Stock Data
 curl -X POST "http://localhost:8000/financial_data/charles_schwab/daily/" \
   -H "Content-Type: application/json" \
-  -d '{"ticker": "AAPL"}'
+  -d '{"symbol": "AAPL", "access_token": "YOUR_ACCESS_TOKEN"}'
 
 ### Charles Schwab Weekly Stock Data
 curl -X POST "http://localhost:8000/financial_data/charles_schwab/weekly/" \
   -H "Content-Type: application/json" \
-  -d '{"ticker": "AAPL"}'
+  -d '{"symbol": "AAPL", "access_token": "YOUR_ACCESS_TOKEN"}'
 
 ### Charles Schwab Monthly Stock Data
 curl -X POST "http://localhost:8000/financial_data/charles_schwab/monthly/" \
   -H "Content-Type: application/json" \
-  -d '{"ticker": "AAPL"}'
+  -d '{"symbol": "AAPL", "access_token": "YOUR_ACCESS_TOKEN"}'
 
 ### Charles Schwab Yearly Stock Data
 curl -X POST "http://localhost:8000/financial_data/charles_schwab/yearly/" \
   -H "Content-Type: application/json" \
-  -d '{"ticker": "AAPL"}'
+  -d '{"symbol": "AAPL", "access_token": "YOUR_ACCESS_TOKEN"}'
 
 ### Charles Schwab Maximum Historical Stock Data
 curl -X POST "http://localhost:8000/financial_data/charles_schwab/max/" \
   -H "Content-Type: application/json" \
-  -d '{"ticker": "AAPL"}'
+  -d '{"symbol": "AAPL", "access_token": "YOUR_ACCESS_TOKEN"}'
 
 ### Charles Schwab Price Change Analysis
 curl -X POST "http://localhost:8000/financial_data/charles_schwab/price_change/" \
   -H "Content-Type: application/json" \
-  -d '{"ticker": "AAPL"}'
+  -d '{"symbol": "AAPL", "access_token": "YOUR_ACCESS_TOKEN"}'
 
 ## News Data Collection
 
@@ -83,6 +83,33 @@ curl -X POST "http://localhost:8000/financial_data/charles_schwab/price_change/"
 curl -X POST "http://localhost:8000/news_data/financial/" \
   -H "Content-Type: application/json" \
   -d '{"category": "markets", "ticker": "AAPL", "page_size": 10}'
+
+## Cryptocurrency Data Collection using Polygon API
+
+### Daily Crypto Data (Past 30 Days)
+curl -X POST "http://localhost:8000/financial_data/polygon/crypto/daily/" \
+  -H "Content-Type: application/json" \
+  -d '{"symbol": "BTC"}'
+
+### Weekly Crypto Data (Past Year)
+curl -X POST "http://localhost:8000/financial_data/polygon/crypto/weekly/" \
+  -H "Content-Type: application/json" \
+  -d '{"symbol": "ETH"}'
+
+### Monthly Crypto Data (Past 2 Years)
+curl -X POST "http://localhost:8000/financial_data/polygon/crypto/monthly/" \
+  -H "Content-Type: application/json" \
+  -d '{"symbol": "ADA"}'
+
+### Crypto Price Change Analysis
+curl -X POST "http://localhost:8000/financial_data/polygon/crypto/price_change/" \
+  -H "Content-Type: application/json" \
+  -d '{"symbol": "SOL"}'
+
+### Real-Time Crypto Price Data
+curl -X POST "http://localhost:8000/financial_data/polygon/crypto/real_time/" \
+  -H "Content-Type: application/json" \
+  -d '{"symbol": "DOGE"}'
 
 ## Comprehensive Economic Data Collection from FRED API
 
@@ -188,6 +215,9 @@ curl -X POST "http://localhost:8000/financial_data/fred/economic_indicators/" \
 - **YFinance Data**: 6 endpoints covering daily, weekly, monthly, yearly, max historical, and price change analysis
 - **Charles Schwab Data**: 6 endpoints with same time intervals plus authentication and callback handling
 
+### Cryptocurrency Data (5 endpoints)
+- **Polygon Crypto Data**: 5 endpoints providing daily, weekly, monthly, price change analysis, and real-time data for major cryptocurrencies (BTC, ETH, ADA, SOL, DOGE, etc.)
+
 ### News Data Collection (1 endpoint)
 - **Financial News API**: Category-based news filtering (general, earnings, federal_reserve, markets, crypto, commodities, economic_data, mergers) with ticker-specific filtering
 
@@ -242,6 +272,7 @@ curl -X POST "http://localhost:8000/financial_data/fred/economic_indicators/" \
 This comprehensive system provides:
 - **Real-time market analysis** via AI models
 - **Historical and current stock data** from multiple sources  
+- **Cryptocurrency data** via Polygon API with comprehensive time intervals
 - **Economic macro indicators** covering all major categories
 - **Sentiment analysis** for text-based market intelligence
 - **Financial news integration** with advanced filtering
