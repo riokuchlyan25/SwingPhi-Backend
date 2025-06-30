@@ -19,6 +19,9 @@ from financial_data.services.polygon_service import (
     polygon_crypto_daily_api, polygon_crypto_weekly_api, polygon_crypto_monthly_api,
     polygon_crypto_price_change_api, polygon_crypto_real_time_api
 )
+from financial_data.services.sec_service import (
+    get_sec_filings_api, get_sec_company_facts_api
+)
 
 # external
 
@@ -198,6 +201,14 @@ def polygon_crypto_price_change_view(request):
 def polygon_crypto_real_time_view(request):
     return polygon_crypto_real_time_api(request)
 
+@csrf_exempt
+def sec_filings_view(request):
+    return get_sec_filings_api(request)
+
+@csrf_exempt
+def sec_company_facts_view(request):
+    return get_sec_company_facts_api(request)
+
 # Template views for testing interfaces
 def yfinance_template(request):
     """Render YFinance testing template"""
@@ -270,3 +281,7 @@ def fred_market_events_template(request):
 def fred_cpi_detailed_template(request):
     """Render FRED detailed CPI testing template"""
     return render(request, 'financial_data/fred_cpi_detailed.html')
+
+def sec_filings_template(request):
+    """Render SEC filings testing template"""
+    return render(request, 'financial_data/sec_filings.html')

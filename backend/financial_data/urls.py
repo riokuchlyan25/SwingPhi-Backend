@@ -52,6 +52,9 @@ urlpatterns = [
     path('polygon/crypto/monthly/', views.polygon_crypto_monthly_view, name='polygon_crypto_monthly'),
     path('polygon/crypto/price_change/', views.polygon_crypto_price_change_view, name='polygon_crypto_price_change'),
     path('polygon/crypto/real_time/', views.polygon_crypto_real_time_view, name='polygon_crypto_real_time'),
+    # SEC endpoints for filings data
+    path('sec/filings/', views.sec_filings_view, name='sec_filings'),
+    path('sec/company_facts/', views.sec_company_facts_view, name='sec_company_facts'),
     # Testing template interfaces
     path('test/yfinance/', views.yfinance_template, name='yfinance_template'),
     path('test/fred/', views.fred_template, name='fred_template'),
@@ -73,4 +76,6 @@ urlpatterns = [
     path('test/fred_economic_indicators/', views.fred_economic_indicators_template, name='fred_economic_indicators_template'),
     path('test/fred_market_events/', views.fred_market_events_template, name='fred_market_events_template'),
     path('test/fred_cpi_detailed/', views.fred_cpi_detailed_template, name='fred_cpi_detailed_template'),
+    # SEC testing template interfaces
+    path('test/sec_filings/', views.sec_filings_template, name='sec_filings_template'),
 ] 

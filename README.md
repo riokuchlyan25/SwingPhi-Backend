@@ -111,6 +111,17 @@ curl -X POST "http://localhost:8000/financial_data/polygon/crypto/real_time/" \
   -H "Content-Type: application/json" \
   -d '{"symbol": "DOGE"}'
 
+## SEC Filings Data Collection using SEC Edgar API
+
+### Get SEC Filing Links for a Stock Ticker
+curl -X GET "http://localhost:8000/financial_data/sec/filings/?ticker=AAPL"
+
+### Get SEC Company Facts (XBRL Data) for a Stock Ticker
+curl -X GET "http://localhost:8000/financial_data/sec/company_facts/?ticker=AAPL"
+
+### SEC Filings Test Interface
+Visit: http://localhost:8000/financial_data/test/sec_filings/
+
 ## Comprehensive Economic Data Collection from FRED API
 
 ### Raw market events from FRED
@@ -218,6 +229,9 @@ curl -X POST "http://localhost:8000/financial_data/fred/economic_indicators/" \
 ### Cryptocurrency Data (5 endpoints)
 - **Polygon Crypto Data**: 5 endpoints providing daily, weekly, monthly, price change analysis, and real-time data for major cryptocurrencies (BTC, ETH, ADA, SOL, DOGE, etc.)
 
+### SEC Filings Data (2 endpoints)
+- **SEC Edgar API**: 2 endpoints providing SEC filing links and company facts (XBRL data) for any stock ticker using CIK lookup
+
 ### News Data Collection (1 endpoint)
 - **Financial News API**: Category-based news filtering (general, earnings, federal_reserve, markets, crypto, commodities, economic_data, mergers) with ticker-specific filtering
 
@@ -273,6 +287,7 @@ This comprehensive system provides:
 - **Real-time market analysis** via AI models
 - **Historical and current stock data** from multiple sources  
 - **Cryptocurrency data** via Polygon API with comprehensive time intervals
+- **SEC filings and regulatory data** via Edgar API with direct filing links
 - **Economic macro indicators** covering all major categories
 - **Sentiment analysis** for text-based market intelligence
 - **Financial news integration** with advanced filtering
