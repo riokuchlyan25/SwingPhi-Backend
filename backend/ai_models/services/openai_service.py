@@ -10,49 +10,46 @@ from django.shortcuts import HttpResponse
 import json
 import re
 
-def openai_api(request):
-    """OpenAI API endpoint - POST requests only"""
+def chatgpt_api(request):
+    """Get simplified ChatGPT response"""
     if request.method == 'POST':
-        if request.content_type == 'application/json':
-            try:
-                data = json.loads(request.body)
-                user_input = data.get('user_input', '')
-            except json.JSONDecodeError:
-                return JsonResponse({'error': 'Invalid JSON'}, status=400)
-        else:
-            user_input = request.POST.get('user_input', '') or request.body.decode('utf-8')
-        
-        if not user_input:
-            return JsonResponse({'error': 'No input provided'}, status=400)
-        
         try:
+            data = json.loads(request.body)
+            # Support both old and new parameter names for backward compatibility
+            prompt = data.get('prompt') or data.get('user_input', '').strip()
+            
+            if not prompt:
+                return JsonResponse({'error': 'Prompt or user_input required'}, status=400)
+            
+            if not all([AZURE_OPENAI_KEY, MODEL_NAME, AZURE_OPENAI_ENDPOINT]):
+                return JsonResponse({'error': 'OpenAI not configured'}, status=500)
+            
             client = AzureOpenAI(
                 api_key=AZURE_OPENAI_KEY,
                 api_version="2023-05-15",
                 azure_endpoint=AZURE_OPENAI_ENDPOINT
             )
+            
+            # For backward compatibility, if user_input is provided, use the original prompt format
+            if data.get('user_input'):
+                analysis_prompt = f"Give me a short stock analysis of the following stock (ensure the analysis is concise and to the point with no special characters just punctuation and the alphabet. do not list out its metrics but rather give me a 5 sentence paragraph analysis. mention unique and insightful details not just its basic facts such as location, industry, etc. do not use special characters or markdown formatting such as * or _. THE RESPONSE MUST BE IN PLAIN TEXT AND LESS THAN 80 WORDS. do not use an astricks or number sign either): {prompt}"
+            else:
+                analysis_prompt = prompt
+            
             response = client.chat.completions.create(
                 model=MODEL_NAME,
-                messages=[
-                    {"role": "user", "content": "Give me a short stock analysis of the following stock (ensure the analysis is concise and to the point with no special characters just punctuation and the alphabet. do not list out its metrics but rather give me a 5 sentence paragraph analysis. mention unique and insightful details not just its basic facts such as location, industry, etc. do not use special characters or markdown formatting such as * or _. THE RESPONSE MUST BE IN PLAIN TEXT AND LESS THAN 80 WORDS. do not use an astricks or number sign either): " + user_input}
-                ]
+                messages=[{"role": "user", "content": analysis_prompt}]
             )
-            ai_response = response.choices[0].message.content
             
-            if request.content_type == 'application/json':
-                return JsonResponse({
-                    'response': ai_response,
-                    'input': user_input
-                })
-            else:
-                return HttpResponse(ai_response, content_type='text/plain')
-                
+            return JsonResponse({
+                'response': response.choices[0].message.content
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
         except Exception as e:
-            if request.content_type == 'application/json':
-                return JsonResponse({'error': str(e)}, status=500)
-            else:
-                return HttpResponse(str(e), content_type='text/plain', status=500)
-
+            return JsonResponse({'error': str(e)}, status=500)
+    
     return JsonResponse({'error': 'POST required'}, status=400)
 
 def phi_confidence_api(request):

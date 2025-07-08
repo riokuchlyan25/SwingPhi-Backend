@@ -9,88 +9,160 @@ from django.http import JsonResponse
 
 FRED_BASE_URL = 'https://api.stlouisfed.org/fred/series/observations'
 
-# Helper to fetch FRED data
+# Helper to fetch FRED data with improved error handling
 def fetch_fred_data(series_id, frequency):
-    params = {
-        'series_id': series_id,
-        'api_key': FRED_API_KEY,
-        'file_type': 'json',
-        'frequency': frequency,
-    }
-    response = requests.get(FRED_BASE_URL, params=params)
-    if response.status_code == 200:
-        data = response.json()
-        return data.get('observations', [])
-    return []
+    """Fetch FRED data with improved error handling and null value protection"""
+    try:
+        if not FRED_API_KEY:
+            return {'error': 'FRED API key not configured'}
+        
+        params = {
+            'series_id': series_id,
+            'api_key': FRED_API_KEY,
+            'file_type': 'json',
+            'frequency': frequency,
+            'limit': 1000,  # Increased limit to get more data
+            'sort_order': 'desc'  # Get most recent first
+        }
+        
+        response = requests.get(FRED_BASE_URL, params=params, timeout=30)
+        
+        if response.status_code == 200:
+            data = response.json()
+            observations = data.get('observations', [])
+            
+            # Filter out null/invalid values and sort by date
+            valid_observations = []
+            for obs in observations:
+                if obs.get('value') and obs.get('value') != '.' and obs.get('value') != 'null':
+                    try:
+                        # Validate that we can convert to float
+                        float(obs['value'])
+                        valid_observations.append(obs)
+                    except (ValueError, TypeError):
+                        continue
+            
+            # Sort by date (most recent last for consistency)
+            valid_observations.sort(key=lambda x: x.get('date', ''))
+            
+            return valid_observations
+        else:
+            return {'error': f'FRED API error: Status {response.status_code}'}
+            
+    except requests.RequestException as e:
+        return {'error': f'Network error: {str(e)}'}
+    except Exception as e:
+        return {'error': f'Unexpected error: {str(e)}'}
 
 def fred_yearly_api(request):
     if request.method == 'POST':
         ticker = request.POST.get('ticker', '')
-        data = fetch_fred_data(ticker, 'a')  # annual
-        return JsonResponse({'yearly': data})
+        if not ticker:
+            return JsonResponse({'error': 'Series ID required'}, status=400)
+            
+        data = fetch_fred_data(ticker, 'a')
+        
+        if isinstance(data, dict) and 'error' in data:
+            return JsonResponse(data, status=500)
+            
+        # Get only the most recent valid data points
+        recent_data = data[-12:] if len(data) > 12 else data
+        
+        return JsonResponse({
+            'series_id': ticker,
+            'latest_value': recent_data[-1]['value'] if recent_data else None,
+            'latest_date': recent_data[-1]['date'] if recent_data else None,
+            'data': recent_data
+        })
     return JsonResponse({'error': 'POST required'}, status=400)
 
 def fred_monthly_api(request):
     if request.method == 'POST':
         ticker = request.POST.get('ticker', '')
-        data = fetch_fred_data(ticker, 'm')  # monthly
-        return JsonResponse({'monthly': data})
+        if not ticker:
+            return JsonResponse({'error': 'Series ID required'}, status=400)
+            
+        data = fetch_fred_data(ticker, 'm')
+        
+        if isinstance(data, dict) and 'error' in data:
+            return JsonResponse(data, status=500)
+            
+        # Get only the most recent valid data points
+        recent_data = data[-24:] if len(data) > 24 else data
+        
+        return JsonResponse({
+            'series_id': ticker,
+            'latest_value': recent_data[-1]['value'] if recent_data else None,
+            'latest_date': recent_data[-1]['date'] if recent_data else None,
+            'data': recent_data
+        })
     return JsonResponse({'error': 'POST required'}, status=400)
 
 def fred_weekly_api(request):
     if request.method == 'POST':
         ticker = request.POST.get('ticker', '')
+        if not ticker:
+            return JsonResponse({'error': 'Ticker/series_id parameter is required'}, status=400)
+            
         data = fetch_fred_data(ticker, 'w')  # weekly
-        return JsonResponse({'weekly': data})
+        
+        if isinstance(data, dict) and 'error' in data:
+            return JsonResponse(data, status=500)
+            
+        return JsonResponse({
+            'weekly': data,
+            'series_id': ticker,
+            'count': len(data) if data else 0,
+            'status': 'success'
+        })
     return JsonResponse({'error': 'POST required'}, status=400)
 
 def fred_max_api(request):
     if request.method == 'POST':
         ticker = request.POST.get('ticker', '')
+        if not ticker:
+            return JsonResponse({'error': 'Ticker/series_id parameter is required'}, status=400)
+            
         data = fetch_fred_data(ticker, 'd')
-        return JsonResponse({'max': data})
+        
+        if isinstance(data, dict) and 'error' in data:
+            return JsonResponse(data, status=500)
+            
+        return JsonResponse({
+            'max': data,
+            'series_id': ticker,
+            'count': len(data) if data else 0,
+            'status': 'success'
+        })
     return JsonResponse({'error': 'POST required'}, status=400)
 
 def fred_economic_indicators_api(request):
-    """Get key economic indicators (CPI, GDP, Unemployment, etc.)"""
+    """Get simplified key economic indicators"""
     if request.method == 'POST':
-        # Key economic indicators
+        # Key indicators only
         indicators = {
-            'CPI_All_Urban': 'CPIAUCSL',  # Consumer Price Index for All Urban Consumers
-            'CPI_Core': 'CPILFESL',       # Core CPI (less food and energy)
-            'Unemployment_Rate': 'UNRATE', # Unemployment Rate
-            'GDP': 'GDP',                  # Gross Domestic Product
-            'Federal_Funds_Rate': 'FEDFUNDS', # Federal Funds Rate
-            'Treasury_10Y': 'DGS10',       # 10-Year Treasury Rate
-            'Industrial_Production': 'INDPRO', # Industrial Production Index
-            'Consumer_Confidence': 'UMCSENT', # Consumer Sentiment
+            'cpi': 'CPIAUCSL',
+            'unemployment': 'UNRATE',
+            'gdp': 'GDP',
+            'fed_rate': 'FEDFUNDS',
+            'treasury_10y': 'DGS10'
         }
         
         results = {}
         for name, series_id in indicators.items():
             try:
-                data = fetch_fred_data(series_id, 'm')  # Monthly frequency
-                # Get latest value if data exists
+                data = fetch_fred_data(series_id, 'm')
                 if data and len(data) > 0:
                     latest = data[-1]
-                    results[name] = {
-                        'series_id': series_id,
-                        'latest_value': latest.get('value', 'N/A'),
-                        'latest_date': latest.get('date', 'N/A'),
-                        'full_data': data[-12:]  # Last 12 months
-                    }
-                else:
-                    results[name] = {
-                        'series_id': series_id,
-                        'error': 'No data available'
-                    }
-            except Exception as e:
-                results[name] = {
-                    'series_id': series_id,
-                    'error': str(e)
-                }
+                    if latest.get('value') and latest['value'] != '.':
+                        results[name] = {
+                            'value': latest['value'],
+                            'date': latest['date']
+                        }
+            except Exception:
+                continue
         
-        return JsonResponse({'economic_indicators': results})
+        return JsonResponse(results)
     return JsonResponse({'error': 'POST required'}, status=400)
 
 def fred_market_events_api(request):

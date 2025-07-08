@@ -5,6 +5,7 @@ import requests
 import base64
 import json
 import yfinance as yf
+import pandas as pd
 
 # built-in
 from django.http import JsonResponse
@@ -19,7 +20,7 @@ def get_ticker_from_request(request):
             ticker = data.get('ticker', '')
         except json.JSONDecodeError:
             ticker = ''
-    return ticker
+    return ticker.strip().upper() if ticker else ''
 
 def yfinance_price_change_api(request):
     """Get price change analysis for a stock"""
@@ -36,61 +37,49 @@ def yfinance_price_change_api(request):
     return JsonResponse({'error': 'POST required'}, status=400)
 
 def yfinance_price_change_data(ticker: str) -> dict:
-    """Analyze price change for a stock ticker"""
+    """Analyze price change for a stock ticker with simplified response"""
     try:
         stock = yf.Ticker(ticker)
+        df = stock.history(period="10d", interval="1d")
         
-        # Get recent data (last 5 days to ensure we have at least 2 trading days)
-        df = stock.history(period="5d", interval="1d")
-        
-        if len(df) < 2:
+        if df is None or df.empty or len(df) < 2:
             return {
-                'error': 'Insufficient data available for this ticker',
-                'ticker': ticker
+                'error': 'No data available'
             }
         
         # Get the two most recent trading days
-        latest_price = df['Close'].iloc[-1]
-        previous_price = df['Close'].iloc[-2]
-        latest_date = df.index[-1].strftime("%Y-%m-%d")
-        previous_date = df.index[-2].strftime("%Y-%m-%d")
+        latest_price = float(df['Close'].iloc[-1])
+        previous_price = float(df['Close'].iloc[-2])
+        
+        # Validate prices
+        if latest_price <= 0 or previous_price <= 0:
+            return {
+                'error': 'Invalid price data'
+            }
         
         # Calculate changes
-        price_change = latest_price - previous_price
-        percentage_change = (price_change / previous_price) * 100
+        price_change = round(latest_price - previous_price, 2)
+        percentage_change = round((price_change / previous_price) * 100, 2)
         
         # Determine direction
-        if price_change > 0:
-            direction = "UP"
-            direction_symbol = "↗"
-        elif price_change < 0:
-            direction = "DOWN"
-            direction_symbol = "↘"
-        else:
-            direction = "UNCHANGED"
-            direction_symbol = "→"
+        direction = "up" if price_change > 0 else "down" if price_change < 0 else "unchanged"
         
         return {
-            'ticker': ticker.upper(),
-            'direction': direction,
-            'direction_symbol': direction_symbol,
-            'price_change': round(price_change, 2),
-            'percentage_change': round(percentage_change, 2),
+            'ticker': ticker,
             'current_price': round(latest_price, 2),
             'previous_price': round(previous_price, 2),
-            'current_date': latest_date,
-            'previous_date': previous_date,
-            'summary': f"{ticker.upper()} went {direction} by ${abs(round(price_change, 2))} ({abs(round(percentage_change, 2))}%) from {previous_date} to {latest_date}"
+            'price_change': price_change,
+            'percentage_change': percentage_change,
+            'direction': direction
         }
         
     except Exception as e:
         return {
-            'error': f'Failed to analyze price change: {str(e)}',
-            'ticker': ticker
+            'error': str(e)
         }
 
 def yfinance_daily_api(request):
-    """Get daily stock data for the past 5 days"""
+    """Get simplified daily stock data"""
     if request.method == 'POST':
         ticker = get_ticker_from_request(request)
         if not ticker:
@@ -98,30 +87,53 @@ def yfinance_daily_api(request):
         
         try:
             data = yfinance_daily_data(ticker)
-            return JsonResponse({'daily': json.loads(data)})
+            parsed_data = json.loads(data)
+            
+            if 'error' in parsed_data:
+                return JsonResponse(parsed_data, status=500)
+                
+            return JsonResponse({
+                'ticker': ticker,
+                'data': parsed_data
+            })
         except Exception as e:
-            return JsonResponse({'error': f'Failed to fetch daily data: {str(e)}'}, status=500)
+            return JsonResponse({'error': str(e)}, status=500)
     return JsonResponse({'error': 'POST required'}, status=400)
 
 def yfinance_daily_data(ticker: str) -> str:
-    """Fetch daily stock data for the past 5 days"""
-    stock = yf.Ticker(ticker)
-    df = stock.history(period="5d", interval="1d")
-    df.reset_index(inplace=True)
-    data = []
-    for _, row in df.iterrows():
-        data.append({
-            "date": row["Date"].strftime("%Y-%m-%d"),
-            "close": round(row["Close"], 2),
-            "open": round(row["Open"], 2),
-            "high": round(row["High"], 2),
-            "low": round(row["Low"], 2),
-            "volume": int(row["Volume"])
-        })
-    return json.dumps(data)
+    """Fetch simplified daily stock data"""
+    try:
+        stock = yf.Ticker(ticker)
+        df = stock.history(period="5d", interval="1d")
+        
+        if df is None or df.empty:
+            return json.dumps({'error': 'No data available'})
+        
+        df.reset_index(inplace=True)
+        data = []
+        
+        for _, row in df.iterrows():
+            # Only include rows with valid data
+            if all(pd.notna([row["Close"], row["Open"], row["High"], row["Low"], row["Volume"]])):
+                if all(val > 0 for val in [row["Close"], row["Open"], row["High"], row["Low"], row["Volume"]]):
+                    data.append({
+                        "date": row["Date"].strftime("%Y-%m-%d"),
+                        "close": round(float(row["Close"]), 2),
+                        "open": round(float(row["Open"]), 2),
+                        "high": round(float(row["High"]), 2),
+                        "low": round(float(row["Low"]), 2),
+                        "volume": int(row["Volume"])
+                    })
+        
+        if not data:
+            return json.dumps({'error': 'No valid data found'})
+            
+        return json.dumps(data)
+    except Exception as e:
+        return json.dumps({'error': str(e)})
 
 def yfinance_weekly_api(request):
-    """Get weekly stock data for the past year"""
+    """Get simplified weekly stock data"""
     if request.method == 'POST':
         ticker = get_ticker_from_request(request)
         if not ticker:
@@ -129,27 +141,49 @@ def yfinance_weekly_api(request):
         
         try:
             data = yfinance_weekly_data(ticker)
-            return JsonResponse({'weekly': json.loads(data)})
+            parsed_data = json.loads(data)
+            
+            if 'error' in parsed_data:
+                return JsonResponse(parsed_data, status=500)
+                
+            return JsonResponse({
+                'ticker': ticker,
+                'data': parsed_data
+            })
         except Exception as e:
-            return JsonResponse({'error': f'Failed to fetch weekly data: {str(e)}'}, status=500)
+            return JsonResponse({'error': str(e)}, status=500)
     return JsonResponse({'error': 'POST required'}, status=400)
 
 def yfinance_weekly_data(ticker: str) -> str:
-    """Fetch weekly stock data for the past year"""
-    stock = yf.Ticker(ticker)
-    df = stock.history(period="1y", interval="1wk")
-    df.reset_index(inplace=True)
-    data = []
-    for _, row in df.iterrows():
-        data.append({
-            "date": row["Date"].strftime("%Y-%m-%d"),
-            "close": round(row["Close"], 2),
-            "open": round(row["Open"], 2),
-            "high": round(row["High"], 2),
-            "low": round(row["Low"], 2),
-            "volume": int(row["Volume"])
-        })
-    return json.dumps(data)
+    """Fetch simplified weekly stock data"""
+    try:
+        stock = yf.Ticker(ticker)
+        df = stock.history(period="1y", interval="1wk")
+        
+        if df is None or df.empty:
+            return json.dumps({'error': 'No data available'})
+        
+        df.reset_index(inplace=True)
+        data = []
+        
+        for _, row in df.iterrows():
+            if all(pd.notna([row["Close"], row["Open"], row["High"], row["Low"], row["Volume"]])):
+                if all(val > 0 for val in [row["Close"], row["Open"], row["High"], row["Low"], row["Volume"]]):
+                    data.append({
+                        "date": row["Date"].strftime("%Y-%m-%d"),
+                        "close": round(float(row["Close"]), 2),
+                        "open": round(float(row["Open"]), 2),
+                        "high": round(float(row["High"]), 2),
+                        "low": round(float(row["Low"]), 2),
+                        "volume": int(row["Volume"])
+                    })
+        
+        if not data:
+            return json.dumps({'error': 'No valid data found'})
+            
+        return json.dumps(data)
+    except Exception as e:
+        return json.dumps({'error': str(e)})
 
 def yfinance_yearly_api(request):
     """Get yearly stock data for maximum available period"""

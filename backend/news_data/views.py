@@ -4,7 +4,9 @@ from news_data.services.news_service import (
     get_financial_news,
     get_news_headlines_template_context,
     get_news_test_dashboard_context,
-    get_news_test_index_context
+    get_news_test_index_context,
+    get_news_headlines_api,
+    get_news_sentiment_api
 )
 
 # external
@@ -12,6 +14,7 @@ from news_data.services.news_service import (
 # built-in
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
 
 @csrf_exempt
 def news_api_view(request):
@@ -52,3 +55,15 @@ def news_test_index(request):
     """
     context = get_news_test_index_context()
     return render(request, 'news_data/news_test_index.html', context)
+
+def news_headlines_view(request):
+    """News headlines template view"""
+    return render(request, 'news_data/news_headlines.html')
+
+def news_test_dashboard_view(request):
+    """News test dashboard template view"""
+    return render(request, 'news_data/news_test_dashboard.html')
+
+def news_test_index_view(request):
+    """News test index template view"""
+    return render(request, 'news_data/news_test_index.html')

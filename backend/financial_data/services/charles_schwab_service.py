@@ -449,3 +449,100 @@ def charles_schwab_price_change_api(request):
             return JsonResponse({'error': f'Failed to fetch price change data: {str(e)}'}, status=500)
     
     return JsonResponse({'error': 'POST required'}, status=400)
+
+def schwab_data_daily(ticker: str) -> str:
+    """Get simplified daily data from mock Charles Schwab API"""
+    try:
+        # Mock Schwab-style data response
+        data = [{
+            "date": "2024-01-05",
+            "close": 185.92,
+            "open": 182.15,
+            "high": 186.40,
+            "low": 181.75,
+            "volume": 52847200
+        }]
+        return json.dumps(data)
+    except Exception as e:
+        return json.dumps({'error': str(e)})
+
+def schwab_price_data(ticker: str) -> dict:
+    """Get simplified price data"""
+    try:
+        return {
+            'ticker': ticker,
+            'current_price': 185.92,
+            'change': 2.45,
+            'change_percent': 1.33,
+            'direction': 'up'
+        }
+    except Exception as e:
+        return {'error': str(e)}
+
+def schwab_price_change_data(ticker: str) -> dict:
+    """Get simplified price change data"""
+    try:
+        return {
+            'ticker': ticker,
+            'current_price': 185.92,
+            'previous_price': 183.47,
+            'price_change': 2.45,
+            'percentage_change': 1.33,
+            'direction': 'up'
+        }
+    except Exception as e:
+        return {'error': str(e)}
+
+def schwab_daily_api(request):
+    """Get simplified daily data"""
+    if request.method == 'POST':
+        ticker = get_ticker_from_request(request)
+        if not ticker:
+            return JsonResponse({'error': 'Ticker required'}, status=400)
+        
+        try:
+            data = schwab_data_daily(ticker)
+            parsed_data = json.loads(data)
+            
+            if 'error' in parsed_data:
+                return JsonResponse(parsed_data, status=500)
+                
+            return JsonResponse({
+                'ticker': ticker,
+                'data': parsed_data
+            })
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'POST required'}, status=400)
+
+def schwab_price_api(request):
+    """Get simplified current price"""
+    if request.method == 'POST':
+        ticker = get_ticker_from_request(request)
+        if not ticker:
+            return JsonResponse({'error': 'Ticker required'}, status=400)
+        
+        try:
+            data = schwab_price_data(ticker)
+            if 'error' in data:
+                return JsonResponse(data, status=500)
+            return JsonResponse(data)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'POST required'}, status=400)
+
+def schwab_price_change_api(request):
+    """Get simplified price change"""
+    if request.method == 'POST':
+        ticker = get_ticker_from_request(request)
+        if not ticker:
+            return JsonResponse({'error': 'Ticker required'}, status=400)
+        
+        try:
+            data = schwab_price_change_data(ticker)
+            if 'error' in data:
+                return JsonResponse(data, status=500)
+            return JsonResponse(data)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'POST required'}, status=400)

@@ -20,8 +20,10 @@ from financial_data.services.polygon_service import (
     polygon_crypto_price_change_api, polygon_crypto_real_time_api
 )
 from financial_data.services.sec_service import (
-    get_sec_filings_api, get_sec_company_facts_api
+    get_sec_filings_api, get_sec_company_facts_api, get_sec_filings_summary_api
 )
+from financial_data.services.earnings_service import get_earnings_calendar_api, get_earnings_for_symbol_api, get_upcoming_earnings_api, get_earnings_insights_api, get_earnings_insights_by_date_api, get_comprehensive_earnings_insights_api, get_earnings_correlation_api
+from financial_data.services.sector_analysis_service import get_sector_trends_api, get_available_sectors_api
 
 # external
 
@@ -209,6 +211,50 @@ def sec_filings_view(request):
 def sec_company_facts_view(request):
     return get_sec_company_facts_api(request)
 
+@csrf_exempt
+def sec_filings_summary_view(request):
+    return get_sec_filings_summary_api(request)
+
+@csrf_exempt
+def earnings_calendar_view(request):
+    return get_earnings_calendar_api(request)
+
+@csrf_exempt
+def earnings_for_symbol_view(request):
+    return get_earnings_for_symbol_api(request)
+
+@csrf_exempt
+def upcoming_earnings_view(request):
+    return get_upcoming_earnings_api(request)
+
+@csrf_exempt
+def earnings_insights_view(request):
+    return get_earnings_insights_api(request)
+
+@csrf_exempt
+def earnings_insights_by_date_view(request):
+    """Get earnings insights for companies reporting on specific date"""
+    return get_earnings_insights_by_date_api(request)
+
+@csrf_exempt
+def comprehensive_earnings_insights_view(request):
+    """Get comprehensive earnings insights with guidance implementation"""
+    return get_comprehensive_earnings_insights_api(request)
+
+@csrf_exempt
+def earnings_correlation_view(request):
+    """Get earnings correlation analysis for a stock"""
+    return get_earnings_correlation_api(request)
+
+# Sector Analysis Views
+def sector_trends_view(request):
+    """Get sector trends analysis with sentiment (positive/negative/neutral)"""
+    return get_sector_trends_api(request)
+
+def available_sectors_view(request):
+    """Get list of available sectors for analysis"""
+    return get_available_sectors_api(request)
+
 # Template views for testing interfaces
 def yfinance_template(request):
     """Render YFinance testing template"""
@@ -285,3 +331,11 @@ def fred_cpi_detailed_template(request):
 def sec_filings_template(request):
     """Render SEC filings testing template"""
     return render(request, 'financial_data/sec_filings.html')
+
+def earnings_calendar_template(request):
+    """Render Earnings Calendar testing template"""
+    return render(request, 'financial_data/earnings_calendar.html')
+
+def sector_trends_template(request):
+    """Render Sector Trends testing template"""
+    return render(request, 'financial_data/sector_trends.html')

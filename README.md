@@ -84,6 +84,24 @@ curl -X POST "http://localhost:8000/news_data/financial/" \
   -H "Content-Type: application/json" \
   -d '{"category": "markets", "ticker": "AAPL", "page_size": 10}'
 
+### Get News Headlines for Stock Symbol
+```bash
+# Get simplified news headlines for a specific stock or general market news
+curl -X GET "http://localhost:8000/news_data/api/headlines/?symbol=AAPL&limit=10"
+```
+
+### Get News Sentiment Analysis for Stock
+```bash
+# Get sentiment analysis (positive/negative/neutral) for a specific stock
+curl -X GET "http://localhost:8000/news_data/api/sentiment/?symbol=AAPL"
+```
+
+### Get Best Articles for Stock (AI-Powered Analysis)
+```bash
+# Get the best 2 articles for a stock based on highest interaction and AI analysis
+curl -X GET "http://localhost:8000/news_data/api/best_articles/?symbol=AAPL"
+```
+
 ## Cryptocurrency Data Collection using Polygon API
 
 ### Daily Crypto Data (Past 30 Days)
@@ -119,8 +137,107 @@ curl -X GET "http://localhost:8000/financial_data/sec/filings/?ticker=AAPL"
 ### Get SEC Company Facts (XBRL Data) for a Stock Ticker
 curl -X GET "http://localhost:8000/financial_data/sec/company_facts/?ticker=AAPL"
 
+### Get AI-Generated 2-Sentence Summary of SEC Filings for a Stock Ticker
+curl -X GET "http://localhost:8000/financial_data/sec/filings_summary/?ticker=AAPL"
+
 ### SEC Filings Test Interface
 Visit: http://localhost:8000/financial_data/test/sec_filings/
+
+## Earnings Calendar Data Collection using Financial Modeling Prep API
+
+### Get Earnings Calendar for Date Range (All Companies)
+```bash`
+# Get all companies reporting earnings in a specific date range
+curl -X GET "http://localhost:8000/financial_data/earnings/calendar/?from_date=2024-01-01&to_date=2024-01-07"
+```
+
+### Get Earnings History for Specific Stock (EPS Reported, EPS Expected, Surprise %, Quarter Cycle)
+```bash
+# Get historical earnings data for a specific stock symbol
+curl -X GET "http://localhost:8000/financial_data/earnings/symbol/?symbol=AAPL"
+```
+
+### Get Upcoming Earnings in Next 30 Days
+```bash
+# Get all companies with earnings scheduled in the next 30 days
+curl -X GET "http://localhost:8000/financial_data/earnings/upcoming/"
+```
+
+### Get Upcoming Earnings for Maximum Available Days
+```bash
+# Get all companies with earnings scheduled for maximum available period (up to 365 days)
+curl -X GET "http://localhost:8000/financial_data/earnings/upcoming/?days=max"
+
+# Get earnings for custom number of days (e.g., 90 days)
+curl -X GET "http://localhost:8000/financial_data/earnings/upcoming/?days=90"
+```
+
+### Earnings Calendar Test Interface
+```
+Visit: http://localhost:8000/financial_data/test/earnings_calendar/
+```
+
+## Earnings Insights - Comprehensive Analysis for Stock Arrays
+
+### Get Comprehensive Earnings Insights for Array of Stocks (Beat Rate, Miss Rate, KPIs)
+```bash
+# Analyze earnings performance for multiple stocks with AI-generated market sentiment
+curl -X POST "http://localhost:8000/financial_data/earnings/insights/" \
+  -H "Content-Type: application/json" \
+  -d '{"symbols": ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "JPM", "JNJ", "V"]}'
+```
+
+### Get Earnings Insights for Companies Reporting on Specific Date
+```bash
+# Get comprehensive analysis for all companies reporting earnings on a specific date
+curl -X GET "http://localhost:8000/financial_data/earnings/insights/date/?date=2024-01-25"
+```
+
+### Get Comprehensive Earnings Insights with Guidance Implementation
+```bash
+# Get comprehensive earnings insights with guidance analysis, KPIs, and performance metrics
+curl -X POST "http://localhost:8000/financial_data/earnings/insights/comprehensive/" \
+  -H "Content-Type: application/json" \
+  -d '{"symbols": ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "JPM", "JNJ", "V"]}'
+```
+
+### Get Earnings Correlation Analysis (AI-Powered)
+```bash
+# Get earnings correlation analysis with cloud revenue, AI/ML growth, chip demand, enterprise spending
+curl -X GET "http://localhost:8000/financial_data/earnings/correlation/?symbol=AAPL"
+```
+
+## Sector Trends Analysis - Positive/Negative/Neutral Classification
+
+### Get Sector Trends Analysis (Sentiment Classification)
+```bash
+# Analyze a specific sector and get positive/negative/neutral sentiment
+curl -X GET "http://localhost:8000/financial_data/sector/trends/?sector=technology"
+```
+
+### Get Available Sectors for Analysis
+```bash
+# Get list of all supported sectors
+curl -X GET "http://localhost:8000/financial_data/sector/available/"
+```
+
+**Supported Sectors:**
+- `technology` - Apple, Microsoft, Google, Meta, NVIDIA, etc.
+- `healthcare` - Johnson & Johnson, UnitedHealth, Pfizer, etc.
+- `financial` - JPMorgan, Bank of America, Wells Fargo, etc.
+- `energy` - Exxon Mobil, Chevron, ConocoPhillips, etc.
+- `consumer_discretionary` - Amazon, Tesla, Home Depot, etc.
+- `consumer_staples` - Procter & Gamble, Coca-Cola, Walmart, etc.
+- `industrials` - Boeing, Caterpillar, General Electric, etc.
+- `utilities` - NextEra Energy, Duke Energy, Southern Company, etc.
+- `materials` - Linde, Air Products, Sherwin-Williams, etc.
+- `real_estate` - American Tower, Prologis, Crown Castle, etc.
+- `communication_services` - Google, Meta, Netflix, Disney, etc.
+
+### Sector Trends Test Interface
+```
+Visit: http://localhost:8000/financial_data/test/sector_trends/
+```
 
 ## Comprehensive Economic Data Collection from FRED API
 
@@ -229,11 +346,20 @@ curl -X POST "http://localhost:8000/financial_data/fred/economic_indicators/" \
 ### Cryptocurrency Data (5 endpoints)
 - **Polygon Crypto Data**: 5 endpoints providing daily, weekly, monthly, price change analysis, and real-time data for major cryptocurrencies (BTC, ETH, ADA, SOL, DOGE, etc.)
 
-### SEC Filings Data (2 endpoints)
-- **SEC Edgar API**: 2 endpoints providing SEC filing links and company facts (XBRL data) for any stock ticker using CIK lookup
+### SEC Filings Data (3 endpoints)
+- **SEC Edgar API**: 3 endpoints providing SEC filing links, company facts (XBRL data), and AI-generated 2-sentence summaries for any stock ticker using CIK lookup
 
-### News Data Collection (1 endpoint)
+### Earnings Calendar Data (3 endpoints)
+- **Financial Modeling Prep API**: 3 endpoints providing earnings calendar data, historical earnings for specific symbols, and upcoming earnings with EPS estimated/actual, surprise %, and quarter cycle dates
+
+### Earnings Insights Data (2 endpoints)
+- **Comprehensive Analysis**: 2 endpoints providing detailed earnings insights for stock arrays including beat rates, miss rates, average surprise percentages, revenue growth, positive earnings rates, and AI-generated market sentiment analysis
+
+### News Data Collection (3 endpoints)
 - **Financial News API**: Category-based news filtering (general, earnings, federal_reserve, markets, crypto, commodities, economic_data, mergers) with ticker-specific filtering
+- **News Headlines API**: 1 endpoint providing simplified news headlines for a specific stock or general market news
+- **News Sentiment Analysis API**: 1 endpoint providing sentiment analysis (positive/negative/neutral) for a specific stock
+- **Best Articles API**: 1 endpoint providing the best 2 articles for a stock based on highest interaction and AI analysis
 
 ### Economic Data from FRED API (15 comprehensive endpoints)
 

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Earnings Calendar Test Interface</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .form-group { margin: 10px 0; }
+        input, button { padding: 8px; margin: 5px; }
+        button { background-color: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        .results { margin-top: 20px; padding: 15px; border: 1px solid #ddd; background-color: #f9f9f9; }
+        .earnings-item { margin: 10px 0; padding: 10px; border: 1px solid #ccc; background-color: white; }
+        .positive { color: green; }
+        .negative { color: red; }
+        .neutral { color: orange; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Earnings Calendar Test Interface</h1>
+        
+        <h2>1. Get Earnings Calendar for Date Range</h2>
+        <div class="form-group">
+            <label>From Date:</label>
+            <input type="date" id="fromDate" />
+            <label>To Date:</label>
+            <input type="date" id="toDate" />
+            <button onclick="getEarningsCalendar()">Get Earnings Calendar</button>
+        </div>
+        
+        <h2>2. Get Historical Earnings for Symbol</h2>
+        <div class="form-group">
+            <label>Stock Symbol:</label>
+            <input type="text" id="stockSymbol" placeholder="e.g., AAPL" />
+            <button onclick="getEarningsForSymbol()">Get Historical Earnings</button>
+        </div>
+        
+        <h2>3. Get Upcoming Earnings</h2>
+        <div class="form-group">
+            <button onclick="getUpcomingEarnings()">Get Upcoming Earnings (Next 30 Days)</button>
+        </div>
+        
+        <div id="results" class="results" style="display: none;">
+            <h3>Results:</h3>
+            <div id="resultsContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Set default dates (today and 7 days from now)
+        const today = new Date();
+        const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+        
+        document.getElementById('fromDate').value = today.toISOString().split('T')[0];
+        document.getElementById('toDate').value = nextWeek.toISOString().split('T')[0];
+
+        async function getEarningsCalendar() {
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+            const resultsDiv = document.getElementById('results');
+            const resultsContent = document.getElementById('resultsContent');
+            
+            if (!fromDate || !toDate) {
+                alert('Please select both from and to dates');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/financial_data/earnings/calendar/?from_date=${fromDate}&to_date=${toDate}`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    let html = `
+                        <h3>Earnings Calendar (${data.date_range.from} to ${data.date_range.to})</h3>
+                        <p><strong>Total Companies:</strong> ${data.total_companies}</p>
+                    `;
+                    
+                    data.earnings_calendar.forEach(earning => {
+                        const surpriseClass = earning.surprise_percentage > 0 ? 'positive' : 
+                                           earning.surprise_percentage < 0 ? 'negative' : 'neutral';
+                        
+                        html += `
+                            <div class="earnings-item">
+                                <h4>${earning.symbol} - ${earning.company_name}</h4>
+                                <p><strong>Date:</strong> ${earning.date} (${earning.time})</p>
+                                <p><strong>Quarter:</strong> ${earning.quarter}</p>
+                                <p><strong>EPS Expected:</strong> ${earning.eps_estimated || 'N/A'}</p>
+                                <p><strong>EPS Actual:</strong> ${earning.eps_actual || 'N/A'}</p>
+                                <p><strong>Surprise %:</strong> <span class="${surpriseClass}">${earning.surprise_percentage || 'N/A'}%</span></p>
+                                <p><strong>Revenue Expected:</strong> ${earning.revenue_estimated || 'N/A'}</p>
+                                <p><strong>Revenue Actual:</strong> ${earning.revenue_actual || 'N/A'}</p>
+                            </div>
+                        `;
+                    });
+                    
+                    resultsContent.innerHTML = html;
+                } else {
+                    resultsContent.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+                }
+                
+                resultsDiv.style.display = 'block';
+            } catch (error) {
+                resultsContent.innerHTML = `<p style="color: red;">Error fetching data: ${error.message}</p>`;
+                resultsDiv.style.display = 'block';
+            }
+        }
+
+        async function getEarningsForSymbol() {
+            const symbol = document.getElementById('stockSymbol').value.toUpperCase();
+            const resultsDiv = document.getElementById('results');
+            const resultsContent = document.getElementById('resultsContent');
+            
+            if (!symbol) {
+                alert('Please enter a stock symbol');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/financial_data/earnings/symbol/?symbol=${symbol}`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    let html = `
+                        <h3>Historical Earnings for ${data.symbol}</h3>
+                        <p><strong>Total Reports:</strong> ${data.total_reports}</p>
+                    `;
+                    
+                    data.historical_earnings.forEach(earning => {
+                        const surpriseClass = earning.surprise_percentage > 0 ? 'positive' : 
+                                           earning.surprise_percentage < 0 ? 'negative' : 'neutral';
+                        
+                        html += `
+                            <div class="earnings-item">
+                                <h4>${earning.symbol} - ${earning.date}</h4>
+                                <p><strong>Quarter:</strong> ${earning.quarter}</p>
+                                <p><strong>EPS Expected:</strong> ${earning.eps_estimated || 'N/A'}</p>
+                                <p><strong>EPS Actual:</strong> ${earning.eps_actual || 'N/A'}</p>
+                                <p><strong>Surprise %:</strong> <span class="${surpriseClass}">${earning.surprise_percentage || 'N/A'}%</span></p>
+                                <p><strong>Revenue Expected:</strong> ${earning.revenue_estimated || 'N/A'}</p>
+                                <p><strong>Revenue Actual:</strong> ${earning.revenue_actual || 'N/A'}</p>
+                                <p><strong>Time:</strong> ${earning.time}</p>
+                            </div>
+                        `;
+                    });
+                    
+                    resultsContent.innerHTML = html;
+                } else {
+                    resultsContent.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+                }
+                
+                resultsDiv.style.display = 'block';
+            } catch (error) {
+                resultsContent.innerHTML = `<p style="color: red;">Error fetching data: ${error.message}</p>`;
+                resultsDiv.style.display = 'block';
+            }
+        }
+
+        async function getUpcomingEarnings() {
+            const resultsDiv = document.getElementById('results');
+            const resultsContent = document.getElementById('resultsContent');
+            
+            try {
+                const response = await fetch('/financial_data/earnings/upcoming/');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    let html = `
+                        <h3>Upcoming Earnings (${data.date_range.from} to ${data.date_range.to})</h3>
+                        <p><strong>Total Upcoming Earnings:</strong> ${data.total_upcoming_earnings}</p>
+                    `;
+                    
+                    Object.keys(data.upcoming_earnings_by_date).forEach(date => {
+                        html += `<h4>Date: ${date}</h4>`;
+                        
+                        data.upcoming_earnings_by_date[date].forEach(earning => {
+                            html += `
+                                <div class="earnings-item">
+                                    <h4>${earning.symbol} - ${earning.company_name}</h4>
+                                    <p><strong>Quarter:</strong> ${earning.quarter}</p>
+                                    <p><strong>EPS Expected:</strong> ${earning.eps_estimated || 'N/A'}</p>
+                                    <p><strong>Revenue Expected:</strong> ${earning.revenue_estimated || 'N/A'}</p>
+                                    <p><strong>Time:</strong> ${earning.time}</p>
+                                </div>
+                            `;
+                        });
+                    });
+                    
+                    resultsContent.innerHTML = html;
+                } else {
+                    resultsContent.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+                }
+                
+                resultsDiv.style.display = 'block';
+            } catch (error) {
+                resultsContent.innerHTML = `<p style="color: red;">Error fetching data: ${error.message}</p>`;
+                resultsDiv.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html> 

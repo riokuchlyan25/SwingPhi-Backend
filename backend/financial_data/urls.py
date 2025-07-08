@@ -55,6 +55,19 @@ urlpatterns = [
     # SEC endpoints for filings data
     path('sec/filings/', views.sec_filings_view, name='sec_filings'),
     path('sec/company_facts/', views.sec_company_facts_view, name='sec_company_facts'),
+    path('sec/filings_summary/', views.sec_filings_summary_view, name='sec_filings_summary'),
+    # Earnings Calendar endpoints using Financial Modeling Prep API
+    path('earnings/calendar/', views.earnings_calendar_view, name='earnings_calendar'),
+    path('earnings/symbol/', views.earnings_for_symbol_view, name='earnings_for_symbol'),
+    path('earnings/upcoming/', views.upcoming_earnings_view, name='upcoming_earnings'),
+    # Earnings Insights endpoints for comprehensive analysis
+    path('earnings/insights/', views.earnings_insights_view, name='earnings_insights'),
+    path('earnings/insights/date/', views.earnings_insights_by_date_view, name='earnings_insights_by_date'),
+    path('earnings/insights/comprehensive/', views.comprehensive_earnings_insights_view, name='comprehensive_earnings_insights'),
+    path('earnings/correlation/', views.earnings_correlation_view, name='earnings_correlation'),
+    # Sector Analysis endpoints
+    path('sector/trends/', views.sector_trends_view, name='sector_trends'),
+    path('sector/available/', views.available_sectors_view, name='available_sectors'),
     # Testing template interfaces
     path('test/yfinance/', views.yfinance_template, name='yfinance_template'),
     path('test/fred/', views.fred_template, name='fred_template'),
@@ -78,4 +91,8 @@ urlpatterns = [
     path('test/fred_cpi_detailed/', views.fred_cpi_detailed_template, name='fred_cpi_detailed_template'),
     # SEC testing template interfaces
     path('test/sec_filings/', views.sec_filings_template, name='sec_filings_template'),
+    # Earnings Calendar testing template interfaces
+    path('test/earnings_calendar/', views.earnings_calendar_template, name='earnings_calendar_template'),
+    # Sector Analysis testing template interfaces
+    path('test/sector_trends/', views.sector_trends_template, name='sector_trends_template'),
 ] 

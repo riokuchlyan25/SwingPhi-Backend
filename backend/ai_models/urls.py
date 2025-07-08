@@ -1,13 +1,16 @@
 from django.urls import path
-from . import views
+from .views import openai_view, claude_view, phi_confidence_view
+from .services.openai_service import chatgpt_api, phi_confidence_api
+from .services.claude_service import claude_api
 
 urlpatterns = [
-    # API Endpoints (POST only)
-    path('openai/', views.openai_view, name='openai_view'),
-    path('claude/', views.claude_view, name='claude_view'),
-    path('phi_confidence/', views.phi_confidence_view, name='phi_confidence_view'),
+    # Template views
+    path('openai/', openai_view, name='openai'),
+    path('claude/', claude_view, name='claude'),
+    path('phi_confidence/', phi_confidence_view, name='phi_confidence'),
     
-    # Testing template interfaces
-    path('test/openai/', views.openai_template, name='openai_template'),
-    path('test/claude/', views.claude_template, name='claude_template'),
+    # API endpoints - simplified
+    path('api/chatgpt/', chatgpt_api, name='chatgpt_api'),
+    path('api/claude/', claude_api, name='claude_api'),
+    path('api/phi_confidence/', phi_confidence_api, name='phi_confidence_api'),
 ]
