@@ -18,8 +18,8 @@ from financial_data.services.yfinance_service import yfinance_daily_api, yfinanc
 from financial_data.services.sec_service import (
     get_sec_filings_api, get_sec_company_facts_api, get_sec_filings_summary_api
 )
-from financial_data.services.earnings_service import get_earnings_calendar_api, get_earnings_for_symbol_api, get_upcoming_earnings_api, get_earnings_insights_api, get_earnings_insights_by_date_api, get_comprehensive_earnings_insights_api, get_earnings_correlation_api
-from financial_data.services.sector_analysis_service import get_sector_trends_api, get_available_sectors_api
+from financial_data.services.earnings_service import get_earnings_calendar_api, get_earnings_for_symbol_api, get_upcoming_earnings_api, get_earnings_insights_api, get_earnings_insights_by_date_api, get_comprehensive_earnings_insights_api, get_earnings_correlation_api, get_earnings_correlation_impact_api
+from financial_data.services.sector_analysis_service import get_sector_trends_api, get_available_sectors_api, get_all_sectors_correlation_api
 
 # external
 
@@ -221,6 +221,11 @@ def earnings_correlation_view(request):
     """Get earnings correlation analysis for a stock"""
     return get_earnings_correlation_api(request)
 
+@csrf_exempt
+def earnings_correlation_impact_view(request):
+    """Get earnings correlation with impact level analysis"""
+    return get_earnings_correlation_impact_api(request)
+
 # Sector Analysis Views
 def sector_trends_view(request):
     """Get sector trends analysis with sentiment (positive/negative/neutral)"""
@@ -229,4 +234,8 @@ def sector_trends_view(request):
 def available_sectors_view(request):
     """Get list of available sectors for analysis"""
     return get_available_sectors_api(request)
+
+def all_sectors_correlation_view(request):
+    """Get correlation analysis across all 26 sectors"""
+    return get_all_sectors_correlation_api(request)
 

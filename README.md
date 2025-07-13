@@ -16,6 +16,14 @@ curl -X POST "http://localhost:8000/ai_models/phi_confidence/" \
   -d '{"text": "Apple stock is performing exceptionally well this quarter with strong earnings growth and positive market sentiment."}'
 ```
 
+### Full Phi Market Analysis - Comprehensive OpenAI Analysis
+```bash
+# Get comprehensive analysis combining price targets, news impact, volume signals, and options activity (1-2 sentences each)
+curl -X POST "http://localhost:8000/ai_models/api/phi_full_market_analysis/" \
+  -H "Content-Type: application/json" \
+  -d '{"symbol": "AAPL"}'
+```
+
 ## Stock and Crypto Price Data Collection
 
 ### Price data for graphs from YFinance (Daily)
@@ -212,6 +220,12 @@ curl -X POST "http://localhost:8000/financial_data/earnings/insights/comprehensi
 curl -X GET "http://localhost:8000/financial_data/earnings/correlation/?symbol=AAPL"
 ```
 
+### Get Earnings Correlation with Impact Level Analysis
+```bash
+# Get earnings correlation (0-100) and impact level (high/medium/low) using FMP API and OpenAI analysis
+curl -X GET "http://localhost:8000/financial_data/earnings/correlation/impact/?symbol=AAPL"
+```
+
 ## Sector Trends Analysis - Positive/Negative/Neutral Classification
 
 ### Get Sector Trends Analysis (Sentiment Classification)
@@ -224,6 +238,12 @@ curl -X GET "http://localhost:8000/financial_data/sector/trends/?sector=technolo
 ```bash
 # Get list of all supported sectors
 curl -X GET "http://localhost:8000/financial_data/sector/available/"
+```
+
+### Get All Sectors Correlation Analysis
+```bash
+# Get numerical correlation (0.0-1.0) and description for all 26 sectors using OpenAI analysis
+curl -X GET "http://localhost:8000/financial_data/sector/correlation/"
 ```
 
 ## Comprehensive Economic Data Collection from FRED API

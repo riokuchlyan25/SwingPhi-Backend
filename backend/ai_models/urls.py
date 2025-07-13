@@ -6,7 +6,8 @@ from .services.openai_service import (
     phi_price_targets_api,
     phi_news_impact_api,
     phi_volume_signals_api,
-    phi_options_activity_api
+    phi_options_activity_api,
+    phi_full_market_analysis_api
 )
 from .services.claude_service import claude_api
 
@@ -26,4 +27,5 @@ urlpatterns = [
     path('api/phi_news_impact/', phi_news_impact_api, name='phi_news_impact_api'),
     path('api/phi_volume_signals/', phi_volume_signals_api, name='phi_volume_signals_api'),
     path('api/phi_options_activity/', phi_options_activity_api, name='phi_options_activity_api'),
+    path('api/phi_full_market_analysis/', phi_full_market_analysis_api, name='phi_full_market_analysis_api'),
 ]

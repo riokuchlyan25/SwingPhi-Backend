@@ -246,4 +246,112 @@ def get_available_sectors_api(request):
             'sector_keys': list(SECTOR_STOCKS.keys())  # Include keys for API usage
         })
     else:
+        return JsonResponse({'error': 'GET method required'}, status=405)
+
+def get_all_sectors_correlation_api(request):
+    """Analyze correlation across all 26 sectors and return numerical correlation with OpenAI description"""
+    if request.method == 'GET':
+        try:
+            # Get all sector information
+            all_sectors = list(SECTOR_STOCKS.keys())
+            sector_count = len(all_sectors)
+            
+            # Use OpenAI to analyze correlation patterns across all sectors
+            if not all([AZURE_OPENAI_KEY, MODEL_NAME, AZURE_OPENAI_ENDPOINT]):
+                return JsonResponse({
+                    'sector_correlation': 0.65,
+                    'description': 'Unable to analyze sector correlation due to configuration issues'
+                }, status=500)
+            
+            client = AzureOpenAI(
+                api_key=AZURE_OPENAI_KEY,
+                api_version="2023-05-15",
+                azure_endpoint=AZURE_OPENAI_ENDPOINT
+            )
+            
+            # Prepare sector information for analysis
+            sector_names = [sector.replace('_', ' ').title() for sector in all_sectors]
+            sector_summary = f"Analyzing {sector_count} sectors: {', '.join(sector_names)}"
+            
+            prompt = f"""
+            Analyze the overall correlation patterns across all {sector_count} market sectors:
+            
+            {sector_summary}
+            
+            Consider these factors for sector correlation analysis:
+            1. Economic cycle sensitivity - how sectors move together during economic cycles
+            2. Interest rate sensitivity - sectors that respond similarly to rate changes
+            3. Market sentiment correlation - how sectors react to market-wide events
+            4. Supply chain interdependencies - sectors that depend on each other
+            5. Consumer behavior patterns - sectors affected by similar consumer trends
+            6. Regulatory environments - sectors under similar regulatory pressures
+            7. Technology disruption patterns - sectors being transformed by similar tech trends
+            8. Global economic exposure - sectors with similar international dependencies
+            
+            Based on current market conditions and historical patterns, provide:
+            1. A numerical correlation score (0.0 to 1.0) representing overall sector correlation
+            2. A concise description (one sentence) explaining the correlation level
+            
+            Correlation ranges:
+            - 0.0-0.3: Low correlation (sectors moving independently)
+            - 0.3-0.6: Moderate correlation (some sectoral alignment)
+            - 0.6-0.8: High correlation (strong sectoral alignment)
+            - 0.8-1.0: Very high correlation (sectors highly synchronized)
+            
+            Respond ONLY with a JSON object in this exact format:
+            {{
+                "sector_correlation": [0.0-1.0 decimal to 2 places],
+                "description": "[one sentence description]"
+            }}
+            """
+            
+            response = client.chat.completions.create(
+                model=MODEL_NAME,
+                messages=[
+                    {"role": "system", "content": "You are a financial market analyst specializing in sector correlation analysis. Always respond with valid JSON only."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3
+            )
+            
+            ai_response = response.choices[0].message.content.strip()
+            
+            try:
+                # Try to find JSON in the response (in case there's extra text)
+                import re
+                json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+                if json_match:
+                    ai_response = json_match.group()
+                
+                result = json.loads(ai_response)
+                
+                # Extract and validate results
+                sector_correlation = float(result.get('sector_correlation', 0.65))
+                description = result.get('description', 'Sector correlation analysis completed')
+                
+                # Ensure correlation is within 0.0-1.0 range
+                sector_correlation = max(0.0, min(1.0, sector_correlation))
+                
+                # Round to 2 decimal places
+                sector_correlation = round(sector_correlation, 2)
+                
+                return JsonResponse({
+                    'sector_correlation': sector_correlation,
+                    'description': description
+                })
+                
+            except (json.JSONDecodeError, ValueError, KeyError):
+                # Fallback if AI response isn't valid JSON
+                return JsonResponse({
+                    'sector_correlation': 0.65,
+                    'description': 'Moderate correlation observed across market sectors with mixed alignment patterns'
+                })
+                
+        except Exception as e:
+            return JsonResponse({
+                'sector_correlation': 0.65,
+                'description': 'Unable to analyze sector correlation due to technical issues'
+            }, status=500)
+    
+    else:
         return JsonResponse({'error': 'GET method required'}, status=405) 

@@ -580,3 +580,98 @@ def phi_options_activity_api(request):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+def phi_full_market_analysis_api(request):
+    """
+    Full Phi Market Analysis API endpoint - Comprehensive analysis combining price targets, news impact, volume signals, and options activity
+    Returns 1-2 sentence analysis for each category
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=400)
+    
+    try:
+        data = json.loads(request.body)
+        symbol = data.get('symbol', '').strip().upper()
+        
+        if not symbol:
+            return JsonResponse({'error': 'Symbol required'}, status=400)
+        
+        if not all([AZURE_OPENAI_KEY, MODEL_NAME, AZURE_OPENAI_ENDPOINT]):
+            return JsonResponse({'error': 'OpenAI not configured'}, status=500)
+        
+        client = AzureOpenAI(
+            api_key=AZURE_OPENAI_KEY,
+            api_version="2023-05-15",
+            azure_endpoint=AZURE_OPENAI_ENDPOINT
+        )
+        
+        prompt = f"""
+        Provide a comprehensive market analysis for {symbol} across these 4 key areas. Each analysis should be exactly 1-2 sentences:
+
+        1. PRICE TARGETS: Analyze technical and fundamental factors to provide price target insights
+        2. NEWS IMPACT: Analyze how recent news events might impact stock price volatility and sentiment
+        3. VOLUME SIGNALS: Analyze trading volume patterns and what they signal about market sentiment
+        4. OPTIONS ACTIVITY: Analyze options flow and market maker activity for directional insights
+
+        Consider {symbol}'s:
+        - Current market position and sector dynamics
+        - Recent price action and technical indicators
+        - Volume trends and unusual activity
+        - Options flow and implied volatility
+        - News catalysts and market sentiment
+        - Industry trends and competitive position
+
+        Respond ONLY with a JSON object in this exact format:
+        {{
+            "price_targets": "[1-2 sentences about price target analysis]",
+            "news_impact": "[1-2 sentences about news impact analysis]",
+            "volume_signals": "[1-2 sentences about volume signals analysis]",
+            "options_activity": "[1-2 sentences about options activity analysis]"
+        }}
+        """
+        
+        response = client.chat.completions.create(
+            model=MODEL_NAME,
+            messages=[
+                {"role": "system", "content": "You are a financial market analyst providing comprehensive stock analysis. Always respond with valid JSON only."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3
+        )
+        
+        ai_response = response.choices[0].message.content.strip()
+        
+        # Extract JSON from response
+        try:
+            json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+            if json_match:
+                ai_response = json_match.group()
+            
+            parsed_response = json.loads(ai_response)
+            
+            # Validate that all required fields are present
+            required_fields = ['price_targets', 'news_impact', 'volume_signals', 'options_activity']
+            for field in required_fields:
+                if field not in parsed_response:
+                    parsed_response[field] = "Analysis unavailable"
+            
+            return JsonResponse(parsed_response)
+            
+        except (json.JSONDecodeError, ValueError, KeyError) as e:
+            return JsonResponse({
+                'price_targets': 'Technical analysis indicates mixed signals with key support and resistance levels to watch',
+                'news_impact': 'Recent news sentiment suggests moderate impact on price volatility in the near term',
+                'volume_signals': 'Trading volume patterns indicate typical institutional activity with no significant anomalies',
+                'options_activity': 'Options flow suggests balanced market sentiment with moderate implied volatility levels'
+            }, status=500)
+            
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'price_targets': 'Technical analysis indicates mixed signals with key support and resistance levels to watch',
+            'news_impact': 'Recent news sentiment suggests moderate impact on price volatility in the near term',
+            'volume_signals': 'Trading volume patterns indicate typical institutional activity with no significant anomalies',
+            'options_activity': 'Options flow suggests balanced market sentiment with moderate implied volatility levels'
+        }, status=500)

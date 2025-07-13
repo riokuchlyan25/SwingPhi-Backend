@@ -923,3 +923,152 @@ def get_earnings_correlation_api(request):
     
     else:
         return JsonResponse({'error': 'GET required'}, status=405)
+
+def get_earnings_correlation_impact_api(request):
+    """Get earnings correlation data with impact level analysis (high/medium/low) using FMP API and OpenAI"""
+    if request.method == 'GET':
+        symbol = request.GET.get('symbol', '').upper().strip()
+        
+        if not symbol:
+            return JsonResponse({'error': 'Symbol required'}, status=400)
+        
+        if not FMP_API_KEY:
+            return JsonResponse({'error': 'FMP API key not configured'}, status=500)
+        
+        try:
+            # Get earnings data from FMP API
+            fmp_url = f"https://financialmodelingprep.com/api/v3/historical/earning_calendar/{symbol}"
+            params = {'apikey': FMP_API_KEY}
+            
+            response = requests.get(fmp_url, params=params, timeout=15)
+            
+            if response.status_code == 200:
+                earnings_data = response.json()
+                
+                # Also get company profile for additional context
+                profile_url = f"https://financialmodelingprep.com/api/v3/profile/{symbol}"
+                profile_response = requests.get(profile_url, params=params, timeout=15)
+                company_profile = profile_response.json() if profile_response.status_code == 200 else []
+                
+                # Use OpenAI to analyze earnings correlation and impact
+                from ai_models.config import AZURE_OPENAI_KEY, MODEL_NAME, AZURE_OPENAI_ENDPOINT
+                from openai import AzureOpenAI
+                
+                if not all([AZURE_OPENAI_KEY, MODEL_NAME, AZURE_OPENAI_ENDPOINT]):
+                    return JsonResponse({
+                        'earnings_correlation': 50,
+                        'impact_level': 'medium'
+                    }, status=500)
+                
+                client = AzureOpenAI(
+                    api_key=AZURE_OPENAI_KEY,
+                    api_version="2023-05-15",
+                    azure_endpoint=AZURE_OPENAI_ENDPOINT
+                )
+                
+                # Prepare earnings data summary for analysis
+                recent_earnings = earnings_data[:8] if earnings_data else []  # Last 8 quarters
+                company_info = company_profile[0] if company_profile else {}
+                
+                earnings_summary = ""
+                if recent_earnings:
+                    earnings_summary = f"Recent earnings data: {len(recent_earnings)} quarters analyzed. "
+                    beats = sum(1 for e in recent_earnings if e.get('eps', 0) > e.get('epsEstimated', 0))
+                    misses = sum(1 for e in recent_earnings if e.get('eps', 0) < e.get('epsEstimated', 0))
+                    earnings_summary += f"Beats: {beats}, Misses: {misses}. "
+                
+                company_summary = ""
+                if company_info:
+                    company_summary = f"Company: {company_info.get('companyName', symbol)}, "
+                    company_summary += f"Industry: {company_info.get('industry', 'N/A')}, "
+                    company_summary += f"Sector: {company_info.get('sector', 'N/A')}, "
+                    company_summary += f"Market Cap: ${company_info.get('mktCap', 0):,}. "
+                
+                prompt = f"""
+                Analyze {symbol}'s earnings correlation and market impact based on the following data:
+                
+                {company_summary}
+                {earnings_summary}
+                
+                Company Description: {company_info.get('description', 'N/A')[:500]}...
+                
+                Provide analysis for:
+                1. Earnings Correlation (0-100): How strongly this stock's earnings performance correlates with overall market movements, sector trends, and economic indicators.
+                2. Impact Level: Overall market impact classification based on company size, sector influence, and earnings volatility.
+                
+                Consider factors like:
+                - Company size and market capitalization
+                - Sector importance and market influence
+                - Earnings consistency and surprise history
+                - Economic sensitivity and cyclicality
+                - Market leadership position
+                
+                For Impact Level:
+                - High Impact: Large cap companies with significant market influence, earnings that move markets
+                - Medium Impact: Mid-cap companies with moderate influence, sector-specific impact
+                - Low Impact: Small cap companies with limited broader market influence
+                
+                Respond ONLY with a JSON object in this exact format:
+                {{
+                    "earnings_correlation": [0-100 integer],
+                    "impact_level": "[high|medium|low]"
+                }}
+                """
+                
+                response = client.chat.completions.create(
+                    model=MODEL_NAME,
+                    messages=[
+                        {"role": "system", "content": "You are a financial analysis expert specializing in earnings correlation and market impact analysis. Always respond with valid JSON only."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.3
+                )
+                
+                ai_response = response.choices[0].message.content.strip()
+                
+                try:
+                    # Try to find JSON in the response (in case there's extra text)
+                    import re
+                    json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+                    if json_match:
+                        ai_response = json_match.group()
+                    
+                    result = json.loads(ai_response)
+                    
+                    # Extract and validate results
+                    earnings_correlation = int(result.get('earnings_correlation', 50))
+                    impact_level = result.get('impact_level', 'medium').lower()
+                    
+                    # Ensure correlation is within 0-100 range
+                    earnings_correlation = max(0, min(100, earnings_correlation))
+                    
+                    # Ensure impact level is valid
+                    if impact_level not in ['high', 'medium', 'low']:
+                        impact_level = 'medium'
+                    
+                    return JsonResponse({
+                        'earnings_correlation': earnings_correlation,
+                        'impact_level': impact_level
+                    })
+                    
+                except (json.JSONDecodeError, ValueError, KeyError):
+                    # Fallback if AI response isn't valid JSON
+                    return JsonResponse({
+                        'earnings_correlation': 50,
+                        'impact_level': 'medium'
+                    })
+                    
+            else:
+                return JsonResponse({
+                    'earnings_correlation': 50,
+                    'impact_level': 'medium'
+                }, status=500)
+                
+        except Exception as e:
+            return JsonResponse({
+                'earnings_correlation': 50,
+                'impact_level': 'medium'
+            }, status=500)
+    
+    else:
+        return JsonResponse({'error': 'GET required'}, status=405)

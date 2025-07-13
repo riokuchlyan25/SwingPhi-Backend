@@ -59,7 +59,9 @@ urlpatterns = [
     path('earnings/insights/date/', views.earnings_insights_by_date_view, name='earnings_insights_by_date'),
     path('earnings/insights/comprehensive/', views.comprehensive_earnings_insights_view, name='comprehensive_earnings_insights'),
     path('earnings/correlation/', views.earnings_correlation_view, name='earnings_correlation'),
+    path('earnings/correlation/impact/', views.earnings_correlation_impact_view, name='earnings_correlation_impact'),
     # Sector Analysis endpoints
     path('sector/trends/', views.sector_trends_view, name='sector_trends'),
     path('sector/available/', views.available_sectors_view, name='available_sectors'),
+    path('sector/correlation/', views.all_sectors_correlation_view, name='all_sectors_correlation'),
 ] 
