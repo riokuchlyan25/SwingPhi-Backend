@@ -815,150 +815,111 @@ def get_comprehensive_earnings_insights_api(request):
         return JsonResponse({'error': 'POST required'}, status=405)
 
 def get_earnings_correlation_api(request):
-    """Get earnings correlation analysis for a stock with cloud revenue, AI/ML growth, chip demand, enterprise spending"""
+    """Get 4 separate earnings correlation percentages (0-100%) for cloud revenue, AI/ML growth, chip demand, enterprise spending"""
     if request.method == 'GET':
         symbol = request.GET.get('symbol', '').upper().strip()
         
         if not symbol:
             return JsonResponse({'error': 'Symbol required'}, status=400)
         
-        if not FMP_API_KEY:
-            return JsonResponse({'error': 'API key not configured'}, status=500)
-        
         try:
-            # Get historical earnings data for the symbol
-            fmp_url = f"https://financialmodelingprep.com/api/v3/historical/earning_calendar/{symbol}"
-            params = {'apikey': FMP_API_KEY}
+            # Use OpenAI to analyze correlation with tech factors
+            from ai_models.config import AZURE_OPENAI_KEY, MODEL_NAME, AZURE_OPENAI_ENDPOINT
+            from openai import AzureOpenAI
             
-            response = requests.get(fmp_url, params=params, timeout=30)
+            if not all([AZURE_OPENAI_KEY, MODEL_NAME, AZURE_OPENAI_ENDPOINT]):
+                return JsonResponse({
+                    'cloud_revenue': 50,
+                    'ai_ml_growth': 50,
+                    'chip_demand': 50,
+                    'enterprise_spending': 50
+                }, status=500)
             
-            if response.status_code == 200:
-                earnings_data = response.json()
+            client = AzureOpenAI(
+                api_key=AZURE_OPENAI_KEY,
+                api_version="2023-05-15",
+                azure_endpoint=AZURE_OPENAI_ENDPOINT
+            )
+            
+            prompt = f"""
+            Analyze how strongly {symbol}'s earnings performance correlates with each of these four technology market factors individually:
+            
+            1. Cloud Revenue: Cloud computing market growth, enterprise cloud adoption, cloud infrastructure spending
+            2. AI/ML Growth: AI/ML market expansion, machine learning adoption, AI hardware demand
+            3. Chip Demand: Semiconductor industry trends, data center chips, automotive semiconductors, consumer electronics
+            4. Enterprise Spending: Enterprise IT spending, corporate software budgets, digital transformation investments
+            
+            For each factor, provide a correlation percentage from 0-100% where:
+            - 0-20% = Very low correlation (minimal exposure)
+            - 21-40% = Low correlation (some indirect exposure)
+            - 41-60% = Medium correlation (moderate exposure)
+            - 61-80% = High correlation (significant exposure)
+            - 81-100% = Extremely high correlation (core business dependency)
+            
+            Based on {symbol}'s business model, industry position, and revenue streams, respond ONLY with a JSON object in this exact format:
+            {{
+                "cloud_revenue": [0-100 integer],
+                "ai_ml_growth": [0-100 integer],
+                "chip_demand": [0-100 integer],
+                "enterprise_spending": [0-100 integer]
+            }}
+            """
+            
+            response = client.chat.completions.create(
+                model=MODEL_NAME,
+                messages=[
+                    {"role": "system", "content": "You are a financial correlation analysis expert. Always respond with valid JSON only."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3
+            )
+            
+            ai_response = response.choices[0].message.content.strip()
+            
+            try:
+                # Try to find JSON in the response (in case there's extra text)
+                import re
+                json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+                if json_match:
+                    ai_response = json_match.group()
                 
-                if not earnings_data:
-                    return JsonResponse({'error': 'No earnings data available for this symbol'}, status=404)
+                result = json.loads(ai_response)
                 
-                # Extract recent earnings performance
-                recent_earnings = earnings_data[:8]  # Last 8 quarters
-                earnings_surprises = []
+                # Extract and validate each correlation percentage
+                cloud_revenue = int(result.get('cloud_revenue', 50))
+                ai_ml_growth = int(result.get('ai_ml_growth', 50))
+                chip_demand = int(result.get('chip_demand', 50))
+                enterprise_spending = int(result.get('enterprise_spending', 50))
                 
-                for earning in recent_earnings:
-                    eps_est = earning.get('epsEstimated')
-                    eps_act = earning.get('eps')
-                    
-                    if eps_est is not None and eps_act is not None and eps_est != 0:
-                        surprise = ((eps_act - eps_est) / abs(eps_est)) * 100
-                        earnings_surprises.append({
-                            'quarter': earning.get('quarter', 'N/A'),
-                            'date': earning.get('date', 'N/A'),
-                            'surprise_percent': round(surprise, 2),
-                            'eps_actual': eps_act,
-                            'eps_estimated': eps_est
-                        })
-                
-                # AI-Generated Correlation Analysis
-                correlation_analysis = {}
-                
-                try:
-                    from ai_models.config import AZURE_OPENAI_KEY, MODEL_NAME, AZURE_OPENAI_ENDPOINT
-                    from openai import AzureOpenAI
-                    
-                    if all([AZURE_OPENAI_KEY, MODEL_NAME, AZURE_OPENAI_ENDPOINT]):
-                        client = AzureOpenAI(
-                            api_key=AZURE_OPENAI_KEY,
-                            api_version="2023-05-15",
-                            azure_endpoint=AZURE_OPENAI_ENDPOINT
-                        )
-                        
-                        # Create analysis prompts for each correlation factor
-                        correlation_factors = {
-                            'cloud_revenue': f"Analyze how {symbol}'s earnings performance over the last 8 quarters correlates with cloud computing market growth and enterprise cloud adoption trends. Consider cloud infrastructure spending, SaaS growth, and digital transformation initiatives.",
-                            'ai_ml_growth': f"Evaluate the correlation between {symbol}'s earnings and AI/ML market expansion. Consider AI hardware demand, machine learning software adoption, and AI-driven business transformation across industries.",
-                            'chip_demand': f"Assess how {symbol}'s earnings correlate with semiconductor industry trends and chip demand. Consider factors like data center chip requirements, automotive semiconductors, consumer electronics, and supply chain dynamics.",
-                            'enterprise_spending': f"Analyze the relationship between {symbol}'s earnings performance and enterprise IT spending patterns. Consider enterprise software budgets, infrastructure investments, and corporate digital transformation spending."
-                        }
-                        
-                        for factor, prompt in correlation_factors.items():
-                            try:
-                                full_prompt = f"{prompt}\n\nBased on recent market trends and the company's business model, provide a brief 2-sentence analysis focusing on the correlation strength (High/Medium/Low) and key factors driving the relationship. Do not include citations."
-                                
-                                ai_response = client.chat.completions.create(
-                                    model=MODEL_NAME,
-                                    messages=[{"role": "user", "content": full_prompt}]
-                                )
-                                
-                                analysis_text = ai_response.choices[0].message.content.strip()
-                                
-                                # Extract correlation strength from the response
-                                if 'high' in analysis_text.lower():
-                                    correlation_strength = 'High'
-                                elif 'medium' in analysis_text.lower():
-                                    correlation_strength = 'Medium'
-                                elif 'low' in analysis_text.lower():
-                                    correlation_strength = 'Low'
-                                else:
-                                    correlation_strength = 'Unknown'
-                                
-                                correlation_analysis[factor] = {
-                                    'correlation_strength': correlation_strength,
-                                    'analysis': analysis_text,
-                                    'factor_name': factor.replace('_', ' ').title()
-                                }
-                                
-                            except Exception as factor_error:
-                                correlation_analysis[factor] = {
-                                    'correlation_strength': 'Unknown',
-                                    'analysis': f'Analysis unavailable: {str(factor_error)}',
-                                    'factor_name': factor.replace('_', ' ').title()
-                                }
-                    
-                    else:
-                        # Fallback analysis without AI
-                        correlation_analysis = {
-                            'cloud_revenue': {
-                                'correlation_strength': 'Unknown',
-                                'analysis': 'AI analysis unavailable. Cloud revenue correlation depends on company\'s exposure to cloud computing market.',
-                                'factor_name': 'Cloud Revenue'
-                            },
-                            'ai_ml_growth': {
-                                'correlation_strength': 'Unknown',
-                                'analysis': 'AI analysis unavailable. AI/ML growth correlation varies by company\'s technology sector involvement.',
-                                'factor_name': 'AI/ML Growth'
-                            },
-                            'chip_demand': {
-                                'correlation_strength': 'Unknown',
-                                'analysis': 'AI analysis unavailable. Chip demand correlation depends on semiconductor industry exposure.',
-                                'factor_name': 'Chip Demand'
-                            },
-                            'enterprise_spending': {
-                                'correlation_strength': 'Unknown',
-                                'analysis': 'AI analysis unavailable. Enterprise spending correlation varies by business model and customer base.',
-                                'factor_name': 'Enterprise Spending'
-                            }
-                        }
-                
-                except Exception as ai_error:
-                    correlation_analysis = {
-                        'error': f'AI correlation analysis failed: {str(ai_error)}'
-                    }
-                
-                # Calculate earnings performance metrics
-                avg_surprise = round(sum(item['surprise_percent'] for item in earnings_surprises) / len(earnings_surprises), 2) if earnings_surprises else 0
-                positive_surprises = sum(1 for item in earnings_surprises if item['surprise_percent'] > 0)
-                beat_rate = round((positive_surprises / len(earnings_surprises)) * 100, 2) if earnings_surprises else 0
+                # Ensure all percentages are within 0-100 range
+                cloud_revenue = max(0, min(100, cloud_revenue))
+                ai_ml_growth = max(0, min(100, ai_ml_growth))
+                chip_demand = max(0, min(100, chip_demand))
+                enterprise_spending = max(0, min(100, enterprise_spending))
                 
                 return JsonResponse({
-                    'symbol': symbol,
-                    'avg_surprise': avg_surprise,
-                    'beat_rate': beat_rate,
-                    'correlations': correlation_analysis
+                    'cloud_revenue': cloud_revenue,
+                    'ai_ml_growth': ai_ml_growth,
+                    'chip_demand': chip_demand,
+                    'enterprise_spending': enterprise_spending
                 })
                 
-            else:
-                return JsonResponse({'error': f'FMP API error: {response.status_code}'}, status=response.status_code)
+            except (json.JSONDecodeError, ValueError, KeyError):
+                # Fallback if AI response isn't valid JSON
+                return JsonResponse({
+                    'cloud_revenue': 50,
+                    'ai_ml_growth': 50,
+                    'chip_demand': 50,
+                    'enterprise_spending': 50
+                })
                 
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+            return JsonResponse({
+                'cloud_revenue': 50,
+                'ai_ml_growth': 50,
+                'chip_demand': 50,
+                'enterprise_spending': 50
+            }, status=500)
     
     else:
         return JsonResponse({'error': 'GET required'}, status=405)

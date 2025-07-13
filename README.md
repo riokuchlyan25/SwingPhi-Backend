@@ -3,86 +3,120 @@
 ## Phi Analysis
 
 ### Phi market trends using OpenAI/Claude
+```bash
 curl -X POST "http://localhost:8000/ai_models/openai/" \
   -H "Content-Type: application/json" \
   -d '{"user_input": "AAPL"}'
+```
 
 ### Phi Confidence Score (0-100) using OpenAI Sentiment Analysis
+```bash
 curl -X POST "http://localhost:8000/ai_models/phi_confidence/" \
   -H "Content-Type: application/json" \
   -d '{"text": "Apple stock is performing exceptionally well this quarter with strong earnings growth and positive market sentiment."}'
+```
 
-## Stock Price Data Collection
+## Stock and Crypto Price Data Collection
 
 ### Price data for graphs from YFinance (Daily)
+```bash
 curl -X POST "http://localhost:8000/financial_data/yfinance/daily/" \
   -H "Content-Type: application/json" \
   -d '{"ticker": "AAPL"}'
+```
 
 ### Phi daily snapshot alerts (Price Change)
+```bash
 curl -X POST "http://localhost:8000/financial_data/yfinance/price_change/" \
   -H "Content-Type: application/json" \
   -d '{"ticker": "AAPL"}'
+```
 
 ### YFinance Weekly Stock Data
+```bash
 curl -X POST "http://localhost:8000/financial_data/yfinance/weekly/" \
   -H "Content-Type: application/json" \
   -d '{"ticker": "AAPL"}'
+```
 
 ### YFinance Monthly Stock Data
+```bash
 curl -X POST "http://localhost:8000/financial_data/yfinance/monthly/" \
   -H "Content-Type: application/json" \
   -d '{"ticker": "AAPL"}'
+```
 
 ### YFinance Yearly Stock Data
+```bash
 curl -X POST "http://localhost:8000/financial_data/yfinance/yearly/" \
   -H "Content-Type: application/json" \
   -d '{"ticker": "AAPL"}'
+```
 
 ### YFinance Maximum Historical Stock Data
+```bash
 curl -X POST "http://localhost:8000/financial_data/yfinance/max/" \
   -H "Content-Type: application/json" \
   -d '{"ticker": "AAPL"}'
+```
+
+## Charles Schwab Routes - not finished access token needed
 
 ### Charles Schwab Login Link
+```bash
 curl -X GET "http://localhost:8000/financial_data/charles_schwab/"
+```
 
 ### Charles Schwab Daily Stock Data
+```bash
 curl -X POST "http://localhost:8000/financial_data/charles_schwab/daily/" \
   -H "Content-Type: application/json" \
   -d '{"symbol": "AAPL", "access_token": "YOUR_ACCESS_TOKEN"}'
+```
 
 ### Charles Schwab Weekly Stock Data
+```bash
 curl -X POST "http://localhost:8000/financial_data/charles_schwab/weekly/" \
   -H "Content-Type: application/json" \
   -d '{"symbol": "AAPL", "access_token": "YOUR_ACCESS_TOKEN"}'
+```
 
 ### Charles Schwab Monthly Stock Data
+```bash
 curl -X POST "http://localhost:8000/financial_data/charles_schwab/monthly/" \
   -H "Content-Type: application/json" \
   -d '{"symbol": "AAPL", "access_token": "YOUR_ACCESS_TOKEN"}'
+```
 
 ### Charles Schwab Yearly Stock Data
+```bash
 curl -X POST "http://localhost:8000/financial_data/charles_schwab/yearly/" \
   -H "Content-Type: application/json" \
   -d '{"symbol": "AAPL", "access_token": "YOUR_ACCESS_TOKEN"}'
+```
 
 ### Charles Schwab Maximum Historical Stock Data
+```bash
 curl -X POST "http://localhost:8000/financial_data/charles_schwab/max/" \
   -H "Content-Type: application/json" \
   -d '{"symbol": "AAPL", "access_token": "YOUR_ACCESS_TOKEN"}'
+```
 
 ### Charles Schwab Price Change Analysis
+```bash
 curl -X POST "http://localhost:8000/financial_data/charles_schwab/price_change/" \
   -H "Content-Type: application/json" \
   -d '{"symbol": "AAPL", "access_token": "YOUR_ACCESS_TOKEN"}'
+```
 
 ## News Data Collection
 
 ### Financial News from News API
+```bash
 curl -X POST "http://localhost:8000/news_data/financial/" \
   -H "Content-Type: application/json" \
   -d '{"category": "markets", "ticker": "AAPL", "page_size": 10}'
+```
 
 ### Get News Headlines for Stock Symbol
 ```bash
@@ -102,51 +136,27 @@ curl -X GET "http://localhost:8000/news_data/api/sentiment/?symbol=AAPL"
 curl -X GET "http://localhost:8000/news_data/api/best_articles/?symbol=AAPL"
 ```
 
-## Cryptocurrency Data Collection using Polygon API
-
-### Daily Crypto Data (Past 30 Days)
-curl -X POST "http://localhost:8000/financial_data/polygon/crypto/daily/" \
-  -H "Content-Type: application/json" \
-  -d '{"symbol": "BTC"}'
-
-### Weekly Crypto Data (Past Year)
-curl -X POST "http://localhost:8000/financial_data/polygon/crypto/weekly/" \
-  -H "Content-Type: application/json" \
-  -d '{"symbol": "ETH"}'
-
-### Monthly Crypto Data (Past 2 Years)
-curl -X POST "http://localhost:8000/financial_data/polygon/crypto/monthly/" \
-  -H "Content-Type: application/json" \
-  -d '{"symbol": "ADA"}'
-
-### Crypto Price Change Analysis
-curl -X POST "http://localhost:8000/financial_data/polygon/crypto/price_change/" \
-  -H "Content-Type: application/json" \
-  -d '{"symbol": "SOL"}'
-
-### Real-Time Crypto Price Data
-curl -X POST "http://localhost:8000/financial_data/polygon/crypto/real_time/" \
-  -H "Content-Type: application/json" \
-  -d '{"symbol": "DOGE"}'
-
 ## SEC Filings Data Collection using SEC Edgar API
 
 ### Get SEC Filing Links for a Stock Ticker
+```bash
 curl -X GET "http://localhost:8000/financial_data/sec/filings/?ticker=AAPL"
+```
 
 ### Get SEC Company Facts (XBRL Data) for a Stock Ticker
+```bash
 curl -X GET "http://localhost:8000/financial_data/sec/company_facts/?ticker=AAPL"
+```
 
 ### Get AI-Generated 2-Sentence Summary of SEC Filings for a Stock Ticker
+```bash
 curl -X GET "http://localhost:8000/financial_data/sec/filings_summary/?ticker=AAPL"
-
-### SEC Filings Test Interface
-Visit: http://localhost:8000/financial_data/test/sec_filings/
+```
 
 ## Earnings Calendar Data Collection using Financial Modeling Prep API
 
 ### Get Earnings Calendar for Date Range (All Companies)
-```bash`
+```bash
 # Get all companies reporting earnings in a specific date range
 curl -X GET "http://localhost:8000/financial_data/earnings/calendar/?from_date=2024-01-01&to_date=2024-01-07"
 ```
@@ -170,11 +180,6 @@ curl -X GET "http://localhost:8000/financial_data/earnings/upcoming/?days=max"
 
 # Get earnings for custom number of days (e.g., 90 days)
 curl -X GET "http://localhost:8000/financial_data/earnings/upcoming/?days=90"
-```
-
-### Earnings Calendar Test Interface
-```
-Visit: http://localhost:8000/financial_data/test/earnings_calendar/
 ```
 
 ## Earnings Insights - Comprehensive Analysis for Stock Arrays
@@ -221,115 +226,133 @@ curl -X GET "http://localhost:8000/financial_data/sector/trends/?sector=technolo
 curl -X GET "http://localhost:8000/financial_data/sector/available/"
 ```
 
-**Supported Sectors:**
-- `technology` - Apple, Microsoft, Google, Meta, NVIDIA, etc.
-- `healthcare` - Johnson & Johnson, UnitedHealth, Pfizer, etc.
-- `financial` - JPMorgan, Bank of America, Wells Fargo, etc.
-- `energy` - Exxon Mobil, Chevron, ConocoPhillips, etc.
-- `consumer_discretionary` - Amazon, Tesla, Home Depot, etc.
-- `consumer_staples` - Procter & Gamble, Coca-Cola, Walmart, etc.
-- `industrials` - Boeing, Caterpillar, General Electric, etc.
-- `utilities` - NextEra Energy, Duke Energy, Southern Company, etc.
-- `materials` - Linde, Air Products, Sherwin-Williams, etc.
-- `real_estate` - American Tower, Prologis, Crown Castle, etc.
-- `communication_services` - Google, Meta, Netflix, Disney, etc.
-
-### Sector Trends Test Interface
-```
-Visit: http://localhost:8000/financial_data/test/sector_trends/
-```
-
 ## Comprehensive Economic Data Collection from FRED API
 
 ### Raw market events from FRED
+```bash
 curl -X POST "http://localhost:8000/financial_data/fred/market_events/" \
   -H "Content-Type: application/json" \
   -d '{}'
+```
 
 ### CPI from FRED
+```bash
 curl -X POST "http://localhost:8000/financial_data/fred/cpi_detailed/" \
   -H "Content-Type: application/json" \
   -d '{}'
+```
 
 ### Money, Banking & Finance Indicators
+```bash
 curl -X POST "http://localhost:8000/financial_data/fred/money_banking/" \
   -H "Content-Type: application/json" \
   -d '{}'
+```
 
 ### Employment & Labor Market Indicators
+```bash
 curl -X POST "http://localhost:8000/financial_data/fred/employment_labor/" \
   -H "Content-Type: application/json" \
   -d '{}'
+```
 
 ### Price & Commodities Indicators
+```bash
 curl -X POST "http://localhost:8000/financial_data/fred/price_commodities/" \
   -H "Content-Type: application/json" \
   -d '{}'
+```
 
 ### International Economic Data
+```bash
 curl -X POST "http://localhost:8000/financial_data/fred/international_data/" \
   -H "Content-Type: application/json" \
   -d '{}'
+```
 
 ### National Accounts Data
+```bash
 curl -X POST "http://localhost:8000/financial_data/fred/national_accounts/" \
   -H "Content-Type: application/json" \
   -d '{}'
+```
 
 ### Academic Research & Policy Uncertainty
+```bash
 curl -X POST "http://localhost:8000/financial_data/fred/academic_research/" \
   -H "Content-Type: application/json" \
   -d '{}'
+```
 
 ### Housing & Real Estate Indicators
+```bash
 curl -X POST "http://localhost:8000/financial_data/fred/housing_real_estate/" \
   -H "Content-Type: application/json" \
   -d '{}'
+```
 
 ### Manufacturing & Industrial Indicators
+```bash
 curl -X POST "http://localhost:8000/financial_data/fred/manufacturing_industrial/" \
   -H "Content-Type: application/json" \
   -d '{}'
+```
 
 ### Healthcare Cost & Utilization Indexes
+```bash
 curl -X POST "http://localhost:8000/financial_data/fred/healthcare_indexes/" \
   -H "Content-Type: application/json" \
   -d '{}'
+```
 
 ### Education & Productivity Indicators
+```bash
 curl -X POST "http://localhost:8000/financial_data/fred/education_productivity/" \
   -H "Content-Type: application/json" \
   -d '{}'
+```
 
 ### Trade Indexes & Transportation Indicators
+```bash
 curl -X POST "http://localhost:8000/financial_data/fred/trade_transportation/" \
   -H "Content-Type: application/json" \
   -d '{}'
+```
 
 ### Income Distribution & Demographics
+```bash
 curl -X POST "http://localhost:8000/financial_data/fred/income_demographics/" \
   -H "Content-Type: application/json" \
   -d '{}'
+```
 
 ### Cryptocurrency & Fintech Sentiment Indicators
+```bash
 curl -X POST "http://localhost:8000/financial_data/fred/cryptocurrency_fintech/" \
   -H "Content-Type: application/json" \
   -d '{}'
+```
 
 ### Historical & Academic Research Data
+```bash
 curl -X POST "http://localhost:8000/financial_data/fred/historical_academic/" \
   -H "Content-Type: application/json" \
   -d '{}'
+```
 
 ### Sector-Specific Economic Indicators
+```bash
 curl -X POST "http://localhost:8000/financial_data/fred/sector_specific/" \
   -H "Content-Type: application/json" \
   -d '{}'
+```
 
 ### General Economic Indicators
+```bash
 curl -X POST "http://localhost:8000/financial_data/fred/economic_indicators/" \
   -H "Content-Type: application/json" \
   -d '{}'
+```
 
 # Comprehensive Indicator Coverage Summary
 
@@ -342,9 +365,6 @@ curl -X POST "http://localhost:8000/financial_data/fred/economic_indicators/" \
 ### Stock Price Data (12 endpoints)
 - **YFinance Data**: 6 endpoints covering daily, weekly, monthly, yearly, max historical, and price change analysis
 - **Charles Schwab Data**: 6 endpoints with same time intervals plus authentication and callback handling
-
-### Cryptocurrency Data (5 endpoints)
-- **Polygon Crypto Data**: 5 endpoints providing daily, weekly, monthly, price change analysis, and real-time data for major cryptocurrencies (BTC, ETH, ADA, SOL, DOGE, etc.)
 
 ### SEC Filings Data (3 endpoints)
 - **SEC Edgar API**: 3 endpoints providing SEC filing links, company facts (XBRL data), and AI-generated 2-sentence summaries for any stock ticker using CIK lookup
@@ -412,7 +432,6 @@ curl -X POST "http://localhost:8000/financial_data/fred/economic_indicators/" \
 This comprehensive system provides:
 - **Real-time market analysis** via AI models
 - **Historical and current stock data** from multiple sources  
-- **Cryptocurrency data** via Polygon API with comprehensive time intervals
 - **SEC filings and regulatory data** via Edgar API with direct filing links
 - **Economic macro indicators** covering all major categories
 - **Sentiment analysis** for text-based market intelligence

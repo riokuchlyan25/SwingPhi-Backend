@@ -46,12 +46,6 @@ urlpatterns = [
     path('yfinance/yearly/', views.yfinance_yearly_view, name='yfinance_yearly'),
     path('yfinance/max/', views.yfinance_max_view, name='yfinance_max'),
     path('yfinance/price_change/', views.yfinance_price_change_view, name='yfinance_price_change'),
-    # Polygon endpoints for crypto data
-    path('polygon/crypto/daily/', views.polygon_crypto_daily_view, name='polygon_crypto_daily'),
-    path('polygon/crypto/weekly/', views.polygon_crypto_weekly_view, name='polygon_crypto_weekly'),
-    path('polygon/crypto/monthly/', views.polygon_crypto_monthly_view, name='polygon_crypto_monthly'),
-    path('polygon/crypto/price_change/', views.polygon_crypto_price_change_view, name='polygon_crypto_price_change'),
-    path('polygon/crypto/real_time/', views.polygon_crypto_real_time_view, name='polygon_crypto_real_time'),
     # SEC endpoints for filings data
     path('sec/filings/', views.sec_filings_view, name='sec_filings'),
     path('sec/company_facts/', views.sec_company_facts_view, name='sec_company_facts'),
@@ -68,31 +62,4 @@ urlpatterns = [
     # Sector Analysis endpoints
     path('sector/trends/', views.sector_trends_view, name='sector_trends'),
     path('sector/available/', views.available_sectors_view, name='available_sectors'),
-    # Testing template interfaces
-    path('test/yfinance/', views.yfinance_template, name='yfinance_template'),
-    path('test/fred/', views.fred_template, name='fred_template'),
-    path('test/charles_schwab/', views.charles_schwab_template, name='charles_schwab_template'),
-    path('test/charles_schwab_price/', views.charles_schwab_price_template, name='charles_schwab_price_template'),
-    path('test/fred_yearly/', views.fred_yearly_template, name='fred_yearly_template'),
-    path('test/fred_monthly/', views.fred_monthly_template, name='fred_monthly_template'),
-    path('test/fred_weekly/', views.fred_weekly_template, name='fred_weekly_template'),
-    path('test/fred_max/', views.fred_max_template, name='fred_max_template'),
-    path('test/yfinance_price_change/', views.yfinance_price_change_template, name='yfinance_price_change_template'),
-    # Charles Schwab testing template interfaces
-    path('test/charles_schwab_daily/', views.charles_schwab_daily_template, name='charles_schwab_daily_template'),
-    path('test/charles_schwab_weekly/', views.charles_schwab_weekly_template, name='charles_schwab_weekly_template'),
-    path('test/charles_schwab_monthly/', views.charles_schwab_monthly_template, name='charles_schwab_monthly_template'),
-    path('test/charles_schwab_yearly/', views.charles_schwab_yearly_template, name='charles_schwab_yearly_template'),
-    path('test/charles_schwab_max/', views.charles_schwab_max_template, name='charles_schwab_max_template'),
-    path('test/charles_schwab_price_change/', views.charles_schwab_price_change_template, name='charles_schwab_price_change_template'),
-    # FRED specialized testing template interfaces
-    path('test/fred_economic_indicators/', views.fred_economic_indicators_template, name='fred_economic_indicators_template'),
-    path('test/fred_market_events/', views.fred_market_events_template, name='fred_market_events_template'),
-    path('test/fred_cpi_detailed/', views.fred_cpi_detailed_template, name='fred_cpi_detailed_template'),
-    # SEC testing template interfaces
-    path('test/sec_filings/', views.sec_filings_template, name='sec_filings_template'),
-    # Earnings Calendar testing template interfaces
-    path('test/earnings_calendar/', views.earnings_calendar_template, name='earnings_calendar_template'),
-    # Sector Analysis testing template interfaces
-    path('test/sector_trends/', views.sector_trends_template, name='sector_trends_template'),
 ] 

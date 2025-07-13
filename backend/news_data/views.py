@@ -2,9 +2,6 @@
 from news_data.services.news_service import (
     get_news_headlines,
     get_financial_news,
-    get_news_headlines_template_context,
-    get_news_test_dashboard_context,
-    get_news_test_index_context,
     get_news_headlines_api,
     get_news_sentiment_api
 )
@@ -12,7 +9,6 @@ from news_data.services.news_service import (
 # external
 
 # built-in
-from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 
@@ -32,38 +28,4 @@ def financial_news_view(request):
     """
     return get_financial_news(request)
 
-def news_headlines_template(request):
-    """
-    Handler for news headlines template view
-    Delegates context generation to the service layer
-    """
-    context = get_news_headlines_template_context()
-    return render(request, 'news_data/news_headlines.html', context)
 
-def news_test_dashboard(request):
-    """
-    Handler for news test dashboard view
-    Delegates context generation to the service layer
-    """
-    context = get_news_test_dashboard_context()
-    return render(request, 'news_data/news_test_dashboard.html', context)
-
-def news_test_index(request):
-    """
-    Handler for news test index view
-    Delegates context generation to the service layer
-    """
-    context = get_news_test_index_context()
-    return render(request, 'news_data/news_test_index.html', context)
-
-def news_headlines_view(request):
-    """News headlines template view"""
-    return render(request, 'news_data/news_headlines.html')
-
-def news_test_dashboard_view(request):
-    """News test dashboard template view"""
-    return render(request, 'news_data/news_test_dashboard.html')
-
-def news_test_index_view(request):
-    """News test index template view"""
-    return render(request, 'news_data/news_test_index.html')

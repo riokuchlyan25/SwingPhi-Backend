@@ -4,7 +4,6 @@ from ai_models.services.claude_service import claude_api
 
 # external
 # built-in
-from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 
@@ -33,14 +32,3 @@ def phi_confidence_view(request):
     """Phi confidence API view - redirect to simplified endpoint"""
     return phi_confidence_api(request)
 
-# Template Views (GET requests)
-def openai_template(request):
-    """Render OpenAI testing template"""
-    return render(request, 'ai_models/openai.html')
-
-def claude_template(request):
-    """Render Claude testing template"""
-    return render(request, 'ai_models/claude.html', {
-        'agent_available': AGENT_AVAILABLE,
-        'agent_error': AGENT_IMPORT_ERROR if not AGENT_AVAILABLE else None
-    })

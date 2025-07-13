@@ -15,10 +15,6 @@ from financial_data.services.fred_service import (
     fred_sector_specific_api
 )
 from financial_data.services.yfinance_service import yfinance_daily_api, yfinance_weekly_api, yfinance_yearly_api, yfinance_max_api, yfinance_monthly_api, yfinance_price_change_api
-from financial_data.services.polygon_service import (
-    polygon_crypto_daily_api, polygon_crypto_weekly_api, polygon_crypto_monthly_api,
-    polygon_crypto_price_change_api, polygon_crypto_real_time_api
-)
 from financial_data.services.sec_service import (
     get_sec_filings_api, get_sec_company_facts_api, get_sec_filings_summary_api
 )
@@ -28,7 +24,6 @@ from financial_data.services.sector_analysis_service import get_sector_trends_ap
 # external
 
 # built-in
-from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
@@ -184,26 +179,6 @@ def yfinance_price_change_view(request):
     return yfinance_price_change_api(request)
 
 @csrf_exempt
-def polygon_crypto_daily_view(request):
-    return polygon_crypto_daily_api(request)
-
-@csrf_exempt
-def polygon_crypto_weekly_view(request):
-    return polygon_crypto_weekly_api(request)
-
-@csrf_exempt
-def polygon_crypto_monthly_view(request):
-    return polygon_crypto_monthly_api(request)
-
-@csrf_exempt
-def polygon_crypto_price_change_view(request):
-    return polygon_crypto_price_change_api(request)
-
-@csrf_exempt
-def polygon_crypto_real_time_view(request):
-    return polygon_crypto_real_time_api(request)
-
-@csrf_exempt
 def sec_filings_view(request):
     return get_sec_filings_api(request)
 
@@ -255,87 +230,3 @@ def available_sectors_view(request):
     """Get list of available sectors for analysis"""
     return get_available_sectors_api(request)
 
-# Template views for testing interfaces
-def yfinance_template(request):
-    """Render YFinance testing template"""
-    return render(request, 'financial_data/yfinance.html')
-
-def fred_template(request):
-    """Render FRED testing template"""
-    return render(request, 'financial_data/fred.html')
-
-def charles_schwab_template(request):
-    """Render Charles Schwab testing template"""
-    return render(request, 'financial_data/charles_schwab.html')
-
-def charles_schwab_price_template(request):
-    """Render Charles Schwab price data testing template"""
-    return render(request, 'financial_data/charles_schwab_price.html')
-
-def fred_yearly_template(request):
-    """Render FRED yearly testing template"""
-    return render(request, 'financial_data/fred_yearly.html')
-
-def fred_monthly_template(request):
-    """Render FRED monthly testing template"""
-    return render(request, 'financial_data/fred_monthly.html')
-
-def fred_weekly_template(request):
-    """Render FRED weekly testing template"""
-    return render(request, 'financial_data/fred_weekly.html')
-
-def fred_max_template(request):
-    """Render FRED max testing template"""
-    return render(request, 'financial_data/fred_max.html')
-
-def yfinance_price_change_template(request):
-    """Render YFinance price change testing template"""
-    return render(request, 'financial_data/yfinance_price_change.html')
-
-def charles_schwab_daily_template(request):
-    """Render Charles Schwab daily testing template"""
-    return render(request, 'financial_data/charles_schwab_daily.html')
-
-def charles_schwab_weekly_template(request):
-    """Render Charles Schwab weekly testing template"""
-    return render(request, 'financial_data/charles_schwab_weekly.html')
-
-def charles_schwab_monthly_template(request):
-    """Render Charles Schwab monthly testing template"""
-    return render(request, 'financial_data/charles_schwab_monthly.html')
-
-def charles_schwab_yearly_template(request):
-    """Render Charles Schwab yearly testing template"""
-    return render(request, 'financial_data/charles_schwab_yearly.html')
-
-def charles_schwab_max_template(request):
-    """Render Charles Schwab max testing template"""
-    return render(request, 'financial_data/charles_schwab_max.html')
-
-def charles_schwab_price_change_template(request):
-    """Render Charles Schwab price change testing template"""
-    return render(request, 'financial_data/charles_schwab_price_change.html')
-
-def fred_economic_indicators_template(request):
-    """Render FRED economic indicators testing template"""
-    return render(request, 'financial_data/fred_economic_indicators.html')
-
-def fred_market_events_template(request):
-    """Render FRED market events testing template"""
-    return render(request, 'financial_data/fred_market_events.html')
-
-def fred_cpi_detailed_template(request):
-    """Render FRED detailed CPI testing template"""
-    return render(request, 'financial_data/fred_cpi_detailed.html')
-
-def sec_filings_template(request):
-    """Render SEC filings testing template"""
-    return render(request, 'financial_data/sec_filings.html')
-
-def earnings_calendar_template(request):
-    """Render Earnings Calendar testing template"""
-    return render(request, 'financial_data/earnings_calendar.html')
-
-def sector_trends_template(request):
-    """Render Sector Trends testing template"""
-    return render(request, 'financial_data/sector_trends.html')

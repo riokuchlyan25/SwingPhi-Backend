@@ -7,6 +7,7 @@ import uuid
 
 # built-in
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 import json
 
 # Import the agent functionality
@@ -18,6 +19,7 @@ except ImportError as e:
     AGENT_AVAILABLE = False
     AGENT_IMPORT_ERROR = str(e)
 
+@csrf_exempt
 def claude_api(request):
     """Get simplified Claude response"""
     if request.method == 'POST':
