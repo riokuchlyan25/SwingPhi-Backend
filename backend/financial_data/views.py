@@ -14,7 +14,7 @@ from financial_data.services.fred_service import (
     fred_income_demographics_api, fred_cryptocurrency_fintech_api, fred_historical_academic_api,
     fred_sector_specific_api
 )
-from financial_data.services.yfinance_service import yfinance_daily_api, yfinance_weekly_api, yfinance_yearly_api, yfinance_max_api, yfinance_monthly_api, yfinance_price_change_api
+from financial_data.services.yfinance_service import yfinance_daily_api, yfinance_weekly_api, yfinance_yearly_api, yfinance_max_api, yfinance_monthly_api, yfinance_price_change_api, stock_correlation_overview_api
 from financial_data.services.sec_service import (
     get_sec_filings_api, get_sec_company_facts_api, get_sec_filings_summary_api
 )
@@ -238,4 +238,9 @@ def available_sectors_view(request):
 def all_sectors_correlation_view(request):
     """Get correlation analysis across all 26 sectors"""
     return get_all_sectors_correlation_api(request)
+
+@csrf_exempt
+def stock_correlation_overview_view(request):
+    """Get stock correlation overview with related stocks grouped by sector"""
+    return stock_correlation_overview_api(request)
 

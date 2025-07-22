@@ -246,6 +246,17 @@ curl -X GET "http://localhost:8000/financial_data/sector/available/"
 curl -X GET "http://localhost:8000/financial_data/sector/correlation/"
 ```
 
+### Stock Correlation Overview - AI-Powered Multi-Sector Analysis
+```bash
+# Get comprehensive stock correlation analysis with related stocks grouped by sector
+# Returns correlation data for same sector (3 stocks) and related sectors (3 stocks each)
+# Includes AI-generated explanatory sentences for each correlation group
+curl -X POST "http://localhost:8000/financial_data/stock/correlation_overview/" \
+  -H "Content-Type: application/json" \
+  -d '{"ticker": "TSLA"}'
+```
+```
+
 ## Comprehensive Economic Data Collection from FRED API
 
 ### Raw market events from FRED

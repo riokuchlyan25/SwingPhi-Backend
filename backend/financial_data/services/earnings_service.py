@@ -3,17 +3,105 @@ from financial_data.config import FMP_API_KEY
 
 # external
 import requests
-from django.http import JsonResponse
 import json
 from datetime import datetime, timedelta
 
 # built-in
+from django.http import JsonResponse
+
+def calculate_earnings_surprise_percentage(eps_actual, eps_estimated):
+    """
+    Calculate earnings surprise percentage with proper mathematical handling
+    
+    Formula: ((actual - estimated) / |estimated|) * 100
+    Special cases:
+    - If estimated is 0 and actual > 0: +100% (perfect beat)
+    - If estimated is 0 and actual < 0: -100% (complete miss)  
+    - If estimated is 0 and actual = 0: 0% (inline)
+    - If estimated is negative: handle properly without abs()
+    """
+    try:
+        eps_actual = float(eps_actual)
+        eps_estimated = float(eps_estimated)
+        
+        # Handle zero estimate case
+        if abs(eps_estimated) < 0.001:  # Treat very small numbers as zero
+            if eps_actual > 0.001:
+                return 100.0  # Beat by 100%
+            elif eps_actual < -0.001:
+                return -100.0  # Miss by 100%
+            else:
+                return 0.0  # Inline
+        
+        # Standard calculation - use estimated value directly, not abs()
+        # This properly handles negative estimates
+        surprise_pct = ((eps_actual - eps_estimated) / eps_estimated) * 100
+        
+        # Cap extreme values for sanity
+        return max(-500.0, min(500.0, surprise_pct))
+        
+    except (ValueError, TypeError, ZeroDivisionError):
+        return None
+
+def calculate_revenue_growth_percentage(revenue_actual, revenue_estimated):
+    """
+    Calculate revenue growth percentage with proper mathematical handling
+    """
+    try:
+        revenue_actual = float(revenue_actual)
+        revenue_estimated = float(revenue_estimated)
+        
+        # Revenue should always be positive, so abs() is appropriate here
+        if abs(revenue_estimated) < 0.001:
+            return None  # Can't calculate growth without baseline
+        
+        growth_pct = ((revenue_actual - revenue_estimated) / abs(revenue_estimated)) * 100
+        
+        # Cap extreme values
+        return max(-100.0, min(1000.0, growth_pct))
+        
+    except (ValueError, TypeError, ZeroDivisionError):
+        return None
+
+def calculate_guidance_accuracy_score(current_error, previous_error=None):
+    """
+    Calculate guidance accuracy score with proper bounds
+    
+    Returns accuracy score from 0-100 where:
+    - 100 = perfect accuracy (0% error)
+    - 0 = completely inaccurate (100%+ error)
+    """
+    try:
+        # Ensure error is within reasonable bounds
+        current_error = max(0.0, min(10.0, float(current_error)))  # Cap at 1000% error
+        
+        # Convert error percentage to accuracy score
+        accuracy = max(0.0, 100.0 - (current_error * 100))
+        
+        return round(accuracy, 2)
+        
+    except (ValueError, TypeError):
+        return 50.0  # Default neutral score
+
+def calculate_percentage_rate(numerator, denominator):
+    """
+    Calculate percentage rate with proper zero division protection
+    """
+    try:
+        if denominator <= 0:
+            return 0.0
+        return round((float(numerator) / float(denominator)) * 100, 2)
+    except (ValueError, TypeError, ZeroDivisionError):
+        return 0.0
 
 def get_earnings_calendar_api(request):
-    """Get simplified earnings calendar data with earnings/guidance tagging"""
+    """Get earnings calendar for date range with simplified data format"""
     if request.method == 'GET':
-        from_date = request.GET.get('from_date', datetime.now().strftime('%Y-%m-%d'))
-        to_date = request.GET.get('to_date', (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d'))
+        from_date = request.GET.get('from_date', '')
+        to_date = request.GET.get('to_date', '')
+        
+        if not from_date or not to_date:
+            return JsonResponse({'error': 'Both from_date and to_date required (YYYY-MM-DD format)'}, status=400)
         
         if not FMP_API_KEY:
             return JsonResponse({'error': 'API key not configured'}, status=500)
@@ -26,49 +114,35 @@ def get_earnings_calendar_api(request):
                 'apikey': FMP_API_KEY
             }
             
-            response = requests.get(fmp_url, params=params, timeout=30)
+            response = requests.get(fmp_url, params=params, timeout=15)
             
             if response.status_code == 200:
-                data = response.json()
-                
-                if isinstance(data, dict) and data.get('Error Message'):
-                    return JsonResponse({'error': data.get('Error Message')}, status=400)
-                
-                # Simplified earnings data - only entries with meaningful data
+                earnings_data = response.json()
                 simplified_earnings = []
-                if isinstance(data, list):
-                    for earning in data:
-                        if (earning and 
-                            earning.get('symbol') and 
-                            earning.get('date') and
-                            (earning.get('epsEstimated') is not None or earning.get('eps') is not None)):
-                            
-                            eps_est = earning.get('epsEstimated')
-                            eps_act = earning.get('eps')
-                            
-                            # Only include if we have at least one meaningful EPS value
-                            if eps_est is not None or eps_act is not None:
-                                # Calculate surprise only if both values exist and are valid
-                                surprise = None
-                                if eps_est is not None and eps_act is not None and eps_est != 0:
-                                    try:
-                                        surprise = round(((float(eps_act) - float(eps_est)) / abs(float(eps_est))) * 100, 2)
-                                    except (ValueError, TypeError, ZeroDivisionError):
-                                        surprise = None
-                                
-                                # Tag as earnings or guidance based on whether actual results are available
-                                tag = "earnings" if eps_act is not None else "guidance"
-                                
-                                simplified_earnings.append({
-                                    'symbol': earning['symbol'],
-                                    'date': earning['date'],
-                                    'eps_estimated': eps_est,
-                                    'eps_actual': eps_act,
-                                    'surprise_percent': surprise,
-                                    'tag': tag,
-                                    'type': 'historical' if eps_act is not None else 'upcoming'
-                                })
                 
+                for earning in earnings_data:
+                    if earning and earning.get('date'):
+                        eps_est = earning.get('epsEstimated')
+                        eps_act = earning.get('eps')
+                        
+                        # Only include if we have at least one meaningful EPS value
+                        if eps_est is not None or eps_act is not None:
+                            # Use improved surprise calculation
+                            surprise = calculate_earnings_surprise_percentage(eps_act, eps_est) if (eps_est is not None and eps_act is not None) else None
+                            
+                            # Tag as earnings or guidance based on whether actual results are available
+                            tag = "earnings" if eps_act is not None else "guidance"
+                            
+                            simplified_earnings.append({
+                                'symbol': earning['symbol'],
+                                'date': earning['date'],
+                                'eps_estimated': eps_est,
+                                'eps_actual': eps_act,
+                                'surprise_percent': round(surprise, 2) if surprise is not None else None,
+                                'tag': tag,
+                                'type': 'historical' if eps_act is not None else 'upcoming'
+                            })
+            
                 return JsonResponse({
                     'from_date': from_date,
                     'to_date': to_date,
@@ -82,10 +156,10 @@ def get_earnings_calendar_api(request):
             return JsonResponse({'error': str(e)}, status=500)
     
     else:
-        return JsonResponse({'error': 'GET required'}, status=405)
+        return JsonResponse({'error': 'GET method required'}, status=405)
 
 def get_earnings_for_symbol_api(request):
-    """Get simplified earnings data for specific symbol with earnings/guidance tagging"""
+    """Get historical earnings for specific symbol with simplified data format"""
     if request.method == 'GET':
         symbol = request.GET.get('symbol', '').upper().strip()
         
@@ -99,28 +173,20 @@ def get_earnings_for_symbol_api(request):
             fmp_url = f"https://financialmodelingprep.com/api/v3/historical/earning_calendar/{symbol}"
             params = {'apikey': FMP_API_KEY}
             
-            response = requests.get(fmp_url, params=params, timeout=30)
+            response = requests.get(fmp_url, params=params, timeout=15)
             
             if response.status_code == 200:
                 earnings_data = response.json()
-                
-                if isinstance(earnings_data, dict) and earnings_data.get('Error Message'):
-                    return JsonResponse({'error': earnings_data.get('Error Message')}, status=400)
-                
-                # Get latest 10 valid earnings reports
                 simplified_earnings = []
+                
                 if isinstance(earnings_data, list):
                     for earning in earnings_data[:10]:
                         if earning and earning.get('date'):
                             eps_est = earning.get('epsEstimated')
                             eps_act = earning.get('eps')
                             
-                            surprise = None
-                            if eps_est is not None and eps_act is not None and eps_est != 0:
-                                try:
-                                    surprise = round(((float(eps_act) - float(eps_est)) / abs(float(eps_est))) * 100, 2)
-                                except (ValueError, TypeError, ZeroDivisionError):
-                                    surprise = None
+                            # Use improved surprise calculation
+                            surprise = calculate_earnings_surprise_percentage(eps_act, eps_est) if (eps_est is not None and eps_act is not None) else None
                             
                             # Tag as earnings or guidance based on whether actual results are available
                             tag = "earnings" if eps_act is not None else "guidance"
@@ -130,7 +196,7 @@ def get_earnings_for_symbol_api(request):
                                 'quarter': earning.get('fiscalDateEnding', '')[:7] if earning.get('fiscalDateEnding') else '',
                                 'eps_estimated': eps_est,
                                 'eps_actual': eps_act,
-                                'surprise_percent': surprise,
+                                'surprise_percent': round(surprise, 2) if surprise is not None else None,
                                 'tag': tag,
                                 'type': 'historical' if eps_act is not None else 'upcoming'
                             })
@@ -146,7 +212,7 @@ def get_earnings_for_symbol_api(request):
             return JsonResponse({'error': str(e)}, status=500)
     
     else:
-        return JsonResponse({'error': 'GET required'}, status=405)
+        return JsonResponse({'error': 'GET method required'}, status=405)
 
 def get_upcoming_earnings_api(request):
     """Get upcoming earnings for maximum available days"""
@@ -300,16 +366,8 @@ def get_earnings_insights_api(request):
                                     
                                     total_analyzed += 1
                                     try:
-                                        # Handle case where estimate is zero
-                                        if abs(eps_est) < 0.001:  # Very small number, treat as zero
-                                            if eps_act > 0:
-                                                surprise = 100  # Beat by 100% if estimate was zero
-                                            elif eps_act < 0:
-                                                surprise = -100  # Miss by 100% if estimate was zero
-                                            else:
-                                                surprise = 0  # Inline if both are zero
-                                        else:
-                                            surprise = ((float(eps_act) - float(eps_est)) / abs(float(eps_est))) * 100
+                                        # Use improved surprise calculation
+                                        surprise = calculate_earnings_surprise_percentage(eps_act, eps_est)
                                         
                                         surprise_percentages.append(surprise)
                                         
@@ -493,10 +551,10 @@ def get_earnings_insights_for_symbols(symbols, analysis_date=None):
                         'type': 'historical' if eps_actual is not None else 'upcoming'
                     }
                     
-                    # Analyze earnings performance
+                    # Analyze earnings performance using improved calculation
                     if eps_actual is not None and eps_estimated is not None:
-                        if eps_estimated != 0:
-                            surprise_pct = ((eps_actual - eps_estimated) / abs(eps_estimated)) * 100
+                        surprise_pct = calculate_earnings_surprise_percentage(eps_actual, eps_estimated)
+                        if surprise_pct is not None:
                             surprise_percentages.append(surprise_pct)
                             company_detail['surprise_percentage'] = round(surprise_pct, 2)
                             
@@ -517,11 +575,12 @@ def get_earnings_insights_for_symbols(symbols, analysis_date=None):
                     else:
                         not_reported += 1
                     
-                    # Calculate revenue growth
-                    if revenue_actual is not None and revenue_estimated is not None and revenue_estimated != 0:
-                        revenue_growth = ((revenue_actual - revenue_estimated) / abs(revenue_estimated)) * 100
-                        revenue_growth_rates.append(revenue_growth)
-                        company_detail['revenue_growth'] = round(revenue_growth, 2)
+                    # Calculate revenue growth using improved calculation
+                    if revenue_actual is not None and revenue_estimated is not None:
+                        revenue_growth = calculate_revenue_growth_percentage(revenue_actual, revenue_estimated)
+                        if revenue_growth is not None:
+                            revenue_growth_rates.append(revenue_growth)
+                            company_detail['revenue_growth'] = round(revenue_growth, 2)
                     
                     company_details.append(company_detail)
                 else:
@@ -545,17 +604,17 @@ def get_earnings_insights_for_symbols(symbols, analysis_date=None):
     avg_surprise = round(sum(surprise_percentages) / len(surprise_percentages), 2) if surprise_percentages else 0
     avg_revenue_growth = round(sum(revenue_growth_rates) / len(revenue_growth_rates), 2) if revenue_growth_rates else 0
     
-    # Calculate rates
+    # Calculate rates using improved calculation
     reported_companies = earnings_beat + earnings_missed + earnings_inline
-    beat_rate = round((earnings_beat / reported_companies) * 100, 2) if reported_companies > 0 else 0
-    miss_rate = round((earnings_missed / reported_companies) * 100, 2) if reported_companies > 0 else 0
-    inline_rate = round((earnings_inline / reported_companies) * 100, 2) if reported_companies > 0 else 0
-    positive_earnings_rate = round((positive_earnings_count / companies_with_data) * 100, 2) if companies_with_data > 0 else 0
+    beat_rate = calculate_percentage_rate(earnings_beat, reported_companies)
+    miss_rate = calculate_percentage_rate(earnings_missed, reported_companies)
+    inline_rate = calculate_percentage_rate(earnings_inline, reported_companies)
+    positive_earnings_rate = calculate_percentage_rate(positive_earnings_count, companies_with_data)
     
-    # Calculate guidance rates
-    guidance_raised_rate = round((guidance_raised / guidance_available) * 100, 2) if guidance_available > 0 else 0
-    guidance_lowered_rate = round((guidance_lowered / guidance_available) * 100, 2) if guidance_available > 0 else 0
-    guidance_maintained_rate = round((guidance_maintained / guidance_available) * 100, 2) if guidance_available > 0 else 0
+    # Calculate guidance rates using improved calculation
+    guidance_raised_rate = calculate_percentage_rate(guidance_raised, guidance_available)
+    guidance_lowered_rate = calculate_percentage_rate(guidance_lowered, guidance_available)
+    guidance_maintained_rate = calculate_percentage_rate(guidance_maintained, guidance_available)
     
     return JsonResponse({
         'symbols_analyzed': companies_with_data,
@@ -663,10 +722,10 @@ def get_comprehensive_earnings_insights_api(request):
                                 'type': 'historical' if eps_actual is not None else 'upcoming'
                             }
                             
-                            # Analyze earnings performance
+                            # Analyze earnings performance using improved calculation
                             if eps_actual is not None and eps_estimated is not None:
-                                if eps_estimated != 0:
-                                    surprise_pct = ((eps_actual - eps_estimated) / abs(eps_estimated)) * 100
+                                surprise_pct = calculate_earnings_surprise_percentage(eps_actual, eps_estimated)
+                                if surprise_pct is not None:
                                     surprise_percentages.append(surprise_pct)
                                     company_detail['surprise_percentage'] = round(surprise_pct, 2)
                                     
@@ -710,26 +769,26 @@ def get_comprehensive_earnings_insights_api(request):
                                     
                                     guidance_available += 1
                                     
-                                    # Calculate guidance accuracy score
-                                    prev_guidance_error = abs(prev_eps_actual - prev_eps_est) / abs(prev_eps_est) if prev_eps_est != 0 else 0
-                                    current_guidance_error = abs(eps_actual - eps_estimated) / abs(eps_estimated) if eps_estimated != 0 else 0
+                                    # Calculate guidance accuracy score with improved math
+                                    prev_guidance_error = abs(prev_eps_actual - prev_eps_est) / abs(prev_eps_est) if abs(prev_eps_est) > 0.001 else 1.0
+                                    current_guidance_error = abs(eps_actual - eps_estimated) / abs(eps_estimated) if abs(eps_estimated) > 0.001 else 1.0
+                                    
+                                    # Use improved guidance accuracy calculation
+                                    guidance_accuracy_score = calculate_guidance_accuracy_score(current_guidance_error)
                                     
                                     # Guidance improved if current error is smaller
                                     if current_guidance_error < prev_guidance_error:
                                         guidance_beat_expectations += 1
                                         company_detail['guidance_status'] = 'beat_expectations'
-                                        guidance_accuracy_score = 100 - (current_guidance_error * 100)
                                     elif current_guidance_error > prev_guidance_error:
                                         guidance_miss_expectations += 1
                                         company_detail['guidance_status'] = 'miss_expectations'
-                                        guidance_accuracy_score = 100 - (current_guidance_error * 100)
                                     else:
                                         guidance_maintained += 1
                                         company_detail['guidance_status'] = 'maintained'
-                                        guidance_accuracy_score = 100 - (current_guidance_error * 100)
                                     
                                     guidance_accuracy_scores.append(guidance_accuracy_score)
-                                    company_detail['guidance_accuracy'] = round(guidance_accuracy_score, 2)
+                                    company_detail['guidance_accuracy'] = guidance_accuracy_score
                                     
                                     # Guidance direction analysis
                                     if eps_estimated > prev_eps_est:
@@ -764,21 +823,21 @@ def get_comprehensive_earnings_insights_api(request):
             # Calculate comprehensive metrics
             reported_companies = earnings_beat + earnings_missed + earnings_inline
             
-            # Performance rates
-            beat_rate = round((earnings_beat / reported_companies) * 100, 2) if reported_companies > 0 else 0
-            miss_rate = round((earnings_missed / reported_companies) * 100, 2) if reported_companies > 0 else 0
-            inline_rate = round((earnings_inline / reported_companies) * 100, 2) if reported_companies > 0 else 0
+            # Performance rates using improved calculation
+            beat_rate = calculate_percentage_rate(earnings_beat, reported_companies)
+            miss_rate = calculate_percentage_rate(earnings_missed, reported_companies)
+            inline_rate = calculate_percentage_rate(earnings_inline, reported_companies)
             
-            # Guidance rates
-            guidance_beat_rate = round((guidance_beat_expectations / guidance_available) * 100, 2) if guidance_available > 0 else 0
-            guidance_miss_rate = round((guidance_miss_expectations / guidance_available) * 100, 2) if guidance_available > 0 else 0
-            guidance_raised_rate = round((guidance_raised / guidance_available) * 100, 2) if guidance_available > 0 else 0
-            guidance_lowered_rate = round((guidance_lowered / guidance_available) * 100, 2) if guidance_available > 0 else 0
+            # Guidance rates using improved calculation
+            guidance_beat_rate = calculate_percentage_rate(guidance_beat_expectations, guidance_available)
+            guidance_miss_rate = calculate_percentage_rate(guidance_miss_expectations, guidance_available)
+            guidance_raised_rate = calculate_percentage_rate(guidance_raised, guidance_available)
+            guidance_lowered_rate = calculate_percentage_rate(guidance_lowered, guidance_available)
             
-            # KPI rates
-            positive_earnings_rate = round((positive_earnings_count / companies_with_data) * 100, 2) if companies_with_data > 0 else 0
-            revenue_growth_rate = round((revenue_growth_positive / companies_with_data) * 100, 2) if companies_with_data > 0 else 0
-            low_margin_rate = round((low_margin_companies / companies_with_data) * 100, 2) if companies_with_data > 0 else 0
+            # KPI rates using improved calculation
+            positive_earnings_rate = calculate_percentage_rate(positive_earnings_count, companies_with_data)
+            revenue_growth_rate = calculate_percentage_rate(revenue_growth_positive, companies_with_data)
+            low_margin_rate = calculate_percentage_rate(low_margin_companies, companies_with_data)
             
             # Average metrics
             avg_surprise = round(sum(surprise_percentages) / len(surprise_percentages), 2) if surprise_percentages else 0
