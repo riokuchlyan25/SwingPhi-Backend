@@ -260,15 +260,16 @@ curl -X POST "http://localhost:8000/financial_data/stock/correlation_overview/" 
 ## List of all stocks and correlation between two stocks
 
 ### List of all stocks
-'''bash
-curl -X GET "http://localhost:8000/financial_data/nyse/stocks/"   
-'''
-'''
+```bash
+curl -X GET "http://localhost:8000/financial_data/nyse/stocks/"
+```
 
-### correlation
+### Correlation between two stocks
+```bash
 curl -X POST "http://localhost:8000/financial_data/nyse/correlation/" \
   -H "Content-Type: application/json" \
   -d '{"ticker1": "AAPL", "ticker2": "MSFT"}'
+```
 
 
 ## Comprehensive Economic Data Collection from FRED API
@@ -398,87 +399,3 @@ curl -X POST "http://localhost:8000/financial_data/fred/economic_indicators/" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
-
-# Comprehensive Indicator Coverage Summary
-
-## Total Economic Data Collection: 200+ Indicators
-
-### AI & Sentiment Analysis (2 endpoints)
-- **OpenAI/Claude Market Analysis**: Advanced AI analysis of market trends and stock insights
-- **Phi Confidence Score**: 0-100 sentiment analysis using OpenAI for text evaluation
-
-### Stock Price Data (12 endpoints)
-- **YFinance Data**: 6 endpoints covering daily, weekly, monthly, yearly, max historical, and price change analysis
-- **Charles Schwab Data**: 6 endpoints with same time intervals plus authentication and callback handling
-
-### SEC Filings Data (3 endpoints)
-- **SEC Edgar API**: 3 endpoints providing SEC filing links, company facts (XBRL data), and AI-generated 2-sentence summaries for any stock ticker using CIK lookup
-
-### Earnings Calendar Data (3 endpoints)
-- **Financial Modeling Prep API**: 3 endpoints providing earnings calendar data, historical earnings for specific symbols, and upcoming earnings with EPS estimated/actual, surprise %, and quarter cycle dates
-
-### Earnings Insights Data (2 endpoints)
-- **Comprehensive Analysis**: 2 endpoints providing detailed earnings insights for stock arrays including beat rates, miss rates, average surprise percentages, revenue growth, positive earnings rates, and AI-generated market sentiment analysis
-
-### News Data Collection (3 endpoints)
-- **Financial News API**: Category-based news filtering (general, earnings, federal_reserve, markets, crypto, commodities, economic_data, mergers) with ticker-specific filtering
-- **News Headlines API**: 1 endpoint providing simplified news headlines for a specific stock or general market news
-- **News Sentiment Analysis API**: 1 endpoint providing sentiment analysis (positive/negative/neutral) for a specific stock
-- **Best Articles API**: 1 endpoint providing the best 2 articles for a stock based on highest interaction and AI analysis
-
-### Economic Data from FRED API (15 comprehensive endpoints)
-
-#### 1. **Money, Banking & Finance** (16 indicators)
-- M1/M2 Money Supply, Bank Credit, Treasury Rates, Corporate Bond Yields, Foreign Exchange Rates, Yield Spreads
-
-#### 2. **Employment & Labor Markets** (18 indicators) 
-- Unemployment Rates, Job Openings (JOLTS), Initial Claims, Payroll Data, Productivity Metrics, Labor Force Participation
-
-#### 3. **Price & Commodities** (17 indicators)
-- Oil Prices, Gold, Agricultural Commodities, Energy PPI, CPI Components, Import/Export Prices
-
-#### 4. **International Economic Data** (15 indicators)
-- GDP for Major Economies (China, EU, Japan, UK), Foreign Exchange Rates, Trade Balance, Global Indicators
-
-#### 5. **National Accounts** (15 indicators)
-- Real/Nominal GDP, Personal Income, Government Debt, Flow of Funds, Trade & International Transactions
-
-#### 6. **Academic Research & Policy** (12 indicators)
-- Economic Policy Uncertainty, VIX, Recession Probability, NBER Indicators, Financial Stress Indexes
-
-#### 7. **Housing & Real Estate** (14 indicators)
-- Housing Starts, Home Prices, Mortgage Rates, Construction Spending, Real Estate Investment
-
-#### 8. **Manufacturing & Industrial** (14 indicators)
-- Industrial Production, ISM PMI, Capacity Utilization, Durable Goods Orders, Factory Orders
-
-#### 9. **Healthcare Cost & Utilization** (10 indicators)
-- Medical Care CPI, Prescription Drug Prices, Hospital Services, Health Insurance Costs, Medicare Data
-
-#### 10. **Education & Productivity** (10 indicators)
-- Educational Services CPI, College Tuition, Labor Productivity, R&D Spending, Patent Data
-
-#### 11. **Trade & Transportation** (13 indicators)
-- Import/Export Price Indexes, Baltic Dry Index, Container Traffic, Transportation CPI, Vehicle Sales
-
-#### 12. **Income Distribution & Demographics** (12 indicators)
-- Median Household Income, Gini Coefficient, Poverty Rate, Population Data, Minimum Wage
-
-#### 13. **Cryptocurrency & Fintech** (10 indicators)
-- Digital Payment Volume, Credit Card Debt, Electronic Benefits, Fintech Investment Indicators
-
-#### 14. **Historical & Academic Research** (12 indicators)
-- Economic Policy Uncertainty, NBER Recession Indicators, Historical Fed Funds, Yield Curves
-
-#### 15. **Sector-Specific Indicators** (12 indicators)
-- Energy Production, Technology Production, Small Business Optimism, Consumer Sentiment, Innovation Indexes
-
-### Complete Market Intelligence System
-This comprehensive system provides:
-- **Real-time market analysis** via AI models
-- **Historical and current stock data** from multiple sources  
-- **SEC filings and regulatory data** via Edgar API with direct filing links
-- **Economic macro indicators** covering all major categories
-- **Sentiment analysis** for text-based market intelligence
-- **Financial news integration** with advanced filtering
-- **200+ economic data points** for complete market coverage
