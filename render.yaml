@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: swing-phi-backend
+    env: python
+    plan: free
+    buildCommand: ./build.sh
+    startCommand: gunicorn wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: false
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: swing-phi-db
+          property: connectionString
+    databases:
+      - name: swing-phi-db
+        databaseName: swing_phi_db
+        user: swing_phi_user 

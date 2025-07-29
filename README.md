@@ -257,6 +257,20 @@ curl -X POST "http://localhost:8000/financial_data/stock/correlation_overview/" 
 ```
 ```
 
+## List of all stocks and correlation between two stocks
+
+### List of all stocks
+'''bash
+curl -X GET "http://localhost:8000/financial_data/nyse/stocks/"   
+'''
+'''
+
+### correlation
+curl -X POST "http://localhost:8000/financial_data/nyse/correlation/" \
+  -H "Content-Type: application/json" \
+  -d '{"ticker1": "AAPL", "ticker2": "MSFT"}'
+
+
 ## Comprehensive Economic Data Collection from FRED API
 
 ### Raw market events from FRED

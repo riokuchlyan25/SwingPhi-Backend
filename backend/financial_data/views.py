@@ -20,6 +20,7 @@ from financial_data.services.sec_service import (
 )
 from financial_data.services.earnings_service import get_earnings_calendar_api, get_earnings_for_symbol_api, get_upcoming_earnings_api, get_earnings_insights_api, get_earnings_insights_by_date_api, get_comprehensive_earnings_insights_api, get_earnings_correlation_api, get_earnings_correlation_impact_api
 from financial_data.services.sector_analysis_service import get_sector_trends_api, get_available_sectors_api, get_all_sectors_correlation_api
+from financial_data.services.nyse_stocks_service import get_nyse_stocks_api, get_stock_correlation_api
 
 # external
 
@@ -243,4 +244,14 @@ def all_sectors_correlation_view(request):
 def stock_correlation_overview_view(request):
     """Get stock correlation overview with related stocks grouped by sector"""
     return stock_correlation_overview_api(request)
+
+@csrf_exempt
+def nyse_stocks_view(request):
+    """Get list of NYSE stocks with their industries and sectors"""
+    return get_nyse_stocks_api(request)
+
+@csrf_exempt
+def stock_correlation_view(request):
+    """Get correlation between two stocks from the NYSE list"""
+    return get_stock_correlation_api(request)
 

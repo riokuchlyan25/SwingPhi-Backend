@@ -1,0 +1,23 @@
+Django==5.2.1
+django-cors-headers==4.7.0
+gunicorn==23.0.0
+dj-database-url==2.1.0
+whitenoise==6.6.0
+python-dotenv==1.1.0
+requests==2.32.3
+
+# AI/ML packages
+openai==1.95.1
+anthropic==0.52.1
+
+# Financial data packages
+yfinance==0.2.36
+pandas==2.2.3
+numpy==2.2.6
+
+# News API
+newsapi-python==0.2.7
+
+# Optional: MLflow (only if you use the agent functionality)
+# mlflow==2.22.0
+# databricks-sdk==0.55.0

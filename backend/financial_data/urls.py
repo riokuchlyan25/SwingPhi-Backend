@@ -66,4 +66,7 @@ urlpatterns = [
     path('sector/correlation/', views.all_sectors_correlation_view, name='all_sectors_correlation'),
     # Stock Correlation Overview endpoint
     path('stock/correlation_overview/', views.stock_correlation_overview_view, name='stock_correlation_overview'),
+    # NYSE Stocks endpoints
+    path('nyse/stocks/', views.nyse_stocks_view, name='nyse_stocks'),
+    path('nyse/correlation/', views.stock_correlation_view, name='stock_correlation'),
 ] 
