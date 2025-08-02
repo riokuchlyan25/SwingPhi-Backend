@@ -1,9 +1,9 @@
 # internal
 from financial_data.config import FMP_API_KEY
+from .fmp_service import fmp_service
 
 # external
 import requests
-import yfinance as yf
 import pandas as pd
 import numpy as np
 from django.http import JsonResponse
@@ -452,15 +452,11 @@ def get_stock_correlation_api(request):
     return JsonResponse({'error': 'POST method required'}, status=405)
 
 def calculate_stock_correlation(ticker1: str, ticker2: str) -> dict:
-    """Calculate correlation between two stocks using 6 months of price data"""
+    """Calculate correlation between two stocks using 6 months of price data from FMP"""
     try:
-        # Get stock data for both tickers
-        stock1 = yf.Ticker(ticker1)
-        stock2 = yf.Ticker(ticker2)
-        
-        # Get 6 months of daily data
-        data1 = stock1.history(period="6mo", interval="1d")
-        data2 = stock2.history(period="6mo", interval="1d")
+        # Get stock data for both tickers using FMP
+        data1 = fmp_service.get_historical_price_data(ticker1, period="6mo")
+        data2 = fmp_service.get_historical_price_data(ticker2, period="6mo")
         
         if data1.empty or data2.empty:
             return {
@@ -470,8 +466,8 @@ def calculate_stock_correlation(ticker1: str, ticker2: str) -> dict:
             }
         
         # Calculate daily returns (percentage change)
-        returns1 = data1['Close'].pct_change().dropna()
-        returns2 = data2['Close'].pct_change().dropna()
+        returns1 = data1['close'].pct_change().dropna()
+        returns2 = data2['close'].pct_change().dropna()
         
         # Align the data by date
         common_dates = returns1.index.intersection(returns2.index)
@@ -489,12 +485,25 @@ def calculate_stock_correlation(ticker1: str, ticker2: str) -> dict:
         correlation = aligned_returns1.corr(aligned_returns2)
         
         # Get current prices
-        current_price1 = float(data1['Close'].iloc[-1])
-        current_price2 = float(data2['Close'].iloc[-1])
+        current_price1 = float(data1['close'].iloc[-1])
+        current_price2 = float(data2['close'].iloc[-1])
         
-        # Get stock information
+        # Get stock information from FMP
+        stock1_profile = fmp_service.get_company_profile(ticker1)
+        stock2_profile = fmp_service.get_company_profile(ticker2)
+        
+        # Get stock information from our NYSE list as fallback
         stock1_info = NYSE_STOCKS.get(ticker1, {})
         stock2_info = NYSE_STOCKS.get(ticker2, {})
+        
+        # Use FMP data if available, otherwise use our NYSE list
+        stock1_name = stock1_profile.get('companyName', stock1_info.get('name', 'Unknown'))
+        stock1_sector = stock1_profile.get('sector', stock1_info.get('sector', 'Unknown'))
+        stock1_industry = stock1_profile.get('industry', stock1_info.get('industry', 'Unknown'))
+        
+        stock2_name = stock2_profile.get('companyName', stock2_info.get('name', 'Unknown'))
+        stock2_sector = stock2_profile.get('sector', stock2_info.get('sector', 'Unknown'))
+        stock2_industry = stock2_profile.get('industry', stock2_info.get('industry', 'Unknown'))
         
         # Determine correlation strength
         if abs(correlation) >= 0.7:
@@ -517,16 +526,16 @@ def calculate_stock_correlation(ticker1: str, ticker2: str) -> dict:
         return {
             'ticker1': {
                 'symbol': ticker1,
-                'name': stock1_info.get('name', 'Unknown'),
-                'sector': stock1_info.get('sector', 'Unknown'),
-                'industry': stock1_info.get('industry', 'Unknown'),
+                'name': stock1_name,
+                'sector': stock1_sector,
+                'industry': stock1_industry,
                 'current_price': round(current_price1, 2)
             },
             'ticker2': {
                 'symbol': ticker2,
-                'name': stock2_info.get('name', 'Unknown'),
-                'sector': stock2_info.get('sector', 'Unknown'),
-                'industry': stock2_info.get('industry', 'Unknown'),
+                'name': stock2_name,
+                'sector': stock2_sector,
+                'industry': stock2_industry,
                 'current_price': round(current_price2, 2)
             },
             'correlation': {
@@ -537,9 +546,9 @@ def calculate_stock_correlation(ticker1: str, ticker2: str) -> dict:
                 'period': '6 months'
             },
             'analysis': {
-                'same_sector': stock1_info.get('sector') == stock2_info.get('sector'),
-                'sector_correlation': stock1_info.get('sector') == stock2_info.get('sector'),
-                'industry_correlation': stock1_info.get('industry') == stock2_info.get('industry')
+                'same_sector': stock1_sector == stock2_sector,
+                'sector_correlation': stock1_sector == stock2_sector,
+                'industry_correlation': stock1_industry == stock2_industry
             }
         }
         

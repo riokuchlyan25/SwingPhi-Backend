@@ -255,7 +255,6 @@ curl -X POST "http://localhost:8000/financial_data/stock/correlation_overview/" 
   -H "Content-Type: application/json" \
   -d '{"ticker": "TSLA"}'
 ```
-```
 
 ## List of all stocks and correlation between two stocks
 
@@ -270,7 +269,6 @@ curl -X POST "http://localhost:8000/financial_data/nyse/correlation/" \
   -H "Content-Type: application/json" \
   -d '{"ticker1": "AAPL", "ticker2": "MSFT"}'
 ```
-
 
 ## Comprehensive Economic Data Collection from FRED API
 
@@ -398,4 +396,74 @@ curl -X POST "http://localhost:8000/financial_data/fred/sector_specific/" \
 curl -X POST "http://localhost:8000/financial_data/fred/economic_indicators/" \
   -H "Content-Type: application/json" \
   -d '{}'
+```
+
+## Brokerage Integration - Multi-Platform Account Management
+
+### Get Supported Brokerage Platforms
+```bash
+# Get list of all supported brokerage platforms with configuration requirements
+curl -X GET "http://localhost:8000/brokerage_integrations/brokerages/supported/"
+```
+
+### Connect Brokerage Account
+```bash
+# Connect a new brokerage account (Webull example)
+curl -X POST "http://localhost:8000/brokerage_integrations/brokerages/connect/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": 123,
+    "brokerage_name": "webull",
+    "credentials": {
+      "username": "user@example.com",
+      "password": "password123"
+    }
+  }'
+
+# Connect Charles Schwab account (API key method)
+curl -X POST "http://localhost:8000/brokerage_integrations/brokerages/connect/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": 123,
+    "brokerage_name": "charles_schwab",
+    "credentials": {
+      "api_key": "your_api_key",
+      "secret_key": "your_secret_key"
+    }
+  }'
+```
+
+### Get User's Connected Accounts
+```bash
+# Get all connected brokerage accounts for a specific user
+curl -X GET "http://localhost:8000/brokerage_integrations/brokerages/user/123/accounts/"
+```
+
+### Sync Account Data
+```bash
+# Manually sync account data (portfolio positions and transactions)
+curl -X POST "http://localhost:8000/brokerage_integrations/brokerages/accounts/550e8400-e29b-41d4-a716-446655440000/sync/" \
+  -H "Content-Type: application/json" \
+  -d '{"force_sync": false}'
+```
+
+### Get Portfolio Positions
+```bash
+# Get current portfolio positions for a specific account
+curl -X GET "http://localhost:8000/brokerage_integrations/brokerages/accounts/550e8400-e29b-41d4-a716-446655440000/portfolio/"
+```
+
+### Get Transaction History
+```bash
+# Get transaction history with optional filtering
+curl -X GET "http://localhost:8000/brokerage_integrations/brokerages/accounts/550e8400-e29b-41d4-a716-446655440000/transactions/"
+
+# Get transactions with date range and type filters
+curl -X GET "http://localhost:8000/brokerage_integrations/brokerages/accounts/550e8400-e29b-41d4-a716-446655440000/transactions/?start_date=2024-01-01&end_date=2024-01-31&transaction_type=buy"
+```
+
+### Disconnect Brokerage Account
+```bash
+# Disconnect a brokerage account and remove all associated data
+curl -X DELETE "http://localhost:8000/brokerage_integrations/brokerages/accounts/550e8400-e29b-41d4-a716-446655440000/disconnect/"
 ```
