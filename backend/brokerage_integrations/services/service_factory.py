@@ -3,6 +3,13 @@ from .webull_service import WebullService
 from .robinhood_service import RobinhoodService
 from .charles_schwab_service import CharlesSchwabService
 from .fidelity_service import FidelityService
+from .ibkr_service import IBKRService
+from .moomoo_service import MoomooService
+from .sofi_service import SoFiService
+from .etrade_service import ETradeService
+from .etoro_service import EToroService
+from .tradestation_service import TradeStationService
+from .coinbase_service import CoinbaseService
 from .base_service import BaseBrokerageService
 
 
@@ -14,7 +21,13 @@ class BrokerageServiceFactory:
         'robinhood': RobinhoodService,
         'charles_schwab': CharlesSchwabService,
         'fidelity': FidelityService,
-        # Add other services as they are implemented
+        'ibkr': IBKRService,
+        'moomoo': MoomooService,
+        'sofi': SoFiService,
+        'etrade': ETradeService,
+        'etoro': EToroService,
+        'tradestation': TradeStationService,
+        'coinbase': CoinbaseService,
     }
     
     @classmethod
@@ -40,70 +53,81 @@ class BrokerageServiceFactory:
         """Get configuration requirements for a brokerage service"""
         configs = {
             'webull': {
-                'required_fields': ['username', 'password'],
-                'optional_fields': ['access_token', 'refresh_token'],
-                'auth_method': 'username_password',
-                'api_documentation': 'https://webull.com/api'
+                'required_fields': ['app_key', 'app_secret'],
+                'optional_fields': [],
+                'auth_method': 'webull_openapi',
+                'api_documentation': 'https://developer.webull.com/',
+                'notes': 'Requires developer approval; use SDK after App Key/Secret issued.'
             },
             'robinhood': {
-                'required_fields': ['username', 'password'],
-                'optional_fields': ['access_token', 'refresh_token'],
-                'auth_method': 'username_password',
-                'api_documentation': 'https://robinhood.com/api'
+                'required_fields': [],
+                'optional_fields': [],
+                'auth_method': 'aggregator',
+                'api_documentation': 'https://plaid.com/ | https://www.snaptrade.com/',
+                'notes': 'No public API; use Plaid or SnapTrade.'
             },
             'charles_schwab': {
-                'required_fields': ['api_key', 'secret_key'],
-                'optional_fields': ['access_token'],
-                'auth_method': 'api_key_secret',
-                'api_documentation': 'https://schwab.com/api'
+                'required_fields': ['oauth_client_id', 'oauth_client_secret'],
+                'optional_fields': [],
+                'auth_method': 'oauth',
+                'api_documentation': 'https://developer.schwab.com/',
+                'notes': 'Requires app registration and approval.'
             },
             'ibkr': {
-                'required_fields': ['api_key', 'secret_key'],
-                'optional_fields': ['access_token'],
-                'auth_method': 'api_key_secret',
-                'api_documentation': 'https://interactivebrokers.com/api'
+                'required_fields': [],
+                'optional_fields': [],
+                'auth_method': 'client_portal_or_tws',
+                'api_documentation': 'https://www.interactivebrokers.com/en/trading/ib-api.php',
+                'notes': 'Use Client Portal REST or TWS API (ibapi) with Gateway/TWS running.'
             },
             'fidelity': {
-                'required_fields': ['api_key', 'secret_key'],
-                'optional_fields': ['access_token'],
-                'auth_method': 'api_key_secret',
-                'api_documentation': 'https://fidelity.com/api'
+                'required_fields': [],
+                'optional_fields': [],
+                'auth_method': 'aggregator',
+                'api_documentation': 'https://www.snaptrade.com/ | https://plaid.com/',
+                'notes': 'Fidelity Access for authorized partners; use aggregator.'
             },
             'moomoo': {
-                'required_fields': ['username', 'password'],
-                'optional_fields': ['access_token', 'refresh_token'],
-                'auth_method': 'username_password',
-                'api_documentation': 'https://moomoo.com/api'
+                'required_fields': [],
+                'optional_fields': [],
+                'auth_method': 'futu_opend_gateway',
+                'api_documentation': 'https://openapi.futunn.com/futu-api-doc/intro/en/',
+                'notes': 'Requires local OpenD + futu SDK.'
             },
             'sofi': {
-                'required_fields': ['username', 'password'],
-                'optional_fields': ['access_token', 'refresh_token'],
-                'auth_method': 'username_password',
-                'api_documentation': 'https://sofi.com/api'
+                'required_fields': [],
+                'optional_fields': [],
+                'auth_method': 'aggregator',
+                'api_documentation': 'https://plaid.com/',
+                'notes': 'No public API; use Plaid.'
             },
             'etrade': {
-                'required_fields': ['api_key', 'secret_key'],
-                'optional_fields': ['access_token', 'refresh_token'],
-                'auth_method': 'api_key_secret',
-                'api_documentation': 'https://etrade.com/api'
+                'required_fields': ['oauth_client_id', 'oauth_client_secret'],
+                'optional_fields': [],
+                'auth_method': 'oauth',
+                'api_documentation': 'https://developer.etrade.com/',
+                'notes': 'Requires developer app and OAuth keys.'
             },
             'etoro': {
-                'required_fields': ['username', 'password'],
-                'optional_fields': ['access_token', 'refresh_token'],
-                'auth_method': 'username_password',
-                'api_documentation': 'https://etoro.com/api'
+                'required_fields': [],
+                'optional_fields': [],
+                'auth_method': 'aggregator',
+                'api_documentation': 'https://www.snaptrade.com/ | https://vezgo.com/',
+                'notes': 'No public API as of 2025; use aggregator.'
             },
             'tradestation': {
-                'required_fields': ['api_key', 'secret_key'],
-                'optional_fields': ['access_token', 'refresh_token'],
-                'auth_method': 'api_key_secret',
-                'api_documentation': 'https://tradestation.com/api'
+                'required_fields': ['oauth_client_id', 'oauth_client_secret'],
+                'optional_fields': [],
+                'auth_method': 'oauth',
+                'api_documentation': 'https://developer.tradestation.com/',
+                'notes': 'Users can generate API keys for personal use; OAuth required.'
             },
             'coinbase': {
-                'required_fields': ['api_key', 'secret_key'],
-                'optional_fields': ['passphrase'],
-                'auth_method': 'api_key_secret',
-                'api_documentation': 'https://coinbase.com/api'
+                'required_fields': ['api_key', 'api_secret', 'passphrase'],
+                'optional_fields': [],
+                'auth_method': 'api_key',
+                'api_documentation': 'https://docs.cdp.coinbase.com/advanced-trade/docs/welcome',
+                'notes': 'Open to users via API key/secret/passphrase.'
             }
         }
         

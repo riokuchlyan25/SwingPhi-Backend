@@ -1,8 +1,11 @@
 from django.urls import path
-
 from . import views
 
 urlpatterns = [
+    # Phi price routes
+    path('price/change_percent/', views.price_change_percent_view, name='price_change_percent'),
+    path('price/target/', views.price_target_view, name='price_target'),
+
     path('fred/yearly/', views.fred_yearly_view, name='fred_yearly'),
     path('fred/monthly/', views.fred_monthly_view, name='fred_monthly'),
     path('fred/weekly/', views.fred_weekly_view, name='fred_weekly'),

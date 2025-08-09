@@ -177,6 +177,10 @@ class FidelityService(BaseBrokerageService):
         except Exception as e:
             return self._format_error(f"Error getting balance: {str(e)}")
     
+    def get_brokerage_link(self) -> str:
+        """Get Fidelity brokerage login link"""
+        return "https://www.fidelity.com/login"
+    
     def _map_transaction_type(self, fidelity_type: str) -> str:
         """Map Fidelity transaction types to our standard types"""
         type_mapping = {

@@ -187,4 +187,8 @@ class WebullService(BaseBrokerageService):
                 return self._format_error(data.get('message', 'Failed to get balance'))
                 
         except Exception as e:
-            return self._format_error(f"Error getting balance: {str(e)}") 
+            return self._format_error(f"Error getting balance: {str(e)}")
+    
+    def get_brokerage_link(self) -> str:
+        """Get Webull brokerage login link"""
+        return "https://www.webull.com/login" 

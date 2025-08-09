@@ -177,6 +177,10 @@ class CharlesSchwabService(BaseBrokerageService):
         except Exception as e:
             return self._format_error(f"Error getting balance: {str(e)}")
     
+    def get_brokerage_link(self) -> str:
+        """Get Charles Schwab brokerage login link"""
+        return "https://www.schwab.com/login"
+    
     def _map_transaction_type(self, schwab_type: str) -> str:
         """Map Charles Schwab transaction types to our standard types"""
         type_mapping = {

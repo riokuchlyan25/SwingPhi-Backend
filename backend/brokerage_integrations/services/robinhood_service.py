@@ -185,4 +185,8 @@ class RobinhoodService(BaseBrokerageService):
                 return self._format_error('Failed to get balance')
                 
         except Exception as e:
-            return self._format_error(f"Error getting balance: {str(e)}") 
+            return self._format_error(f"Error getting balance: {str(e)}")
+    
+    def get_brokerage_link(self) -> str:
+        """Get Robinhood brokerage login link"""
+        return "https://robinhood.com/login" 

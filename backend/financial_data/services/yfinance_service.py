@@ -4,6 +4,7 @@
 import requests
 import base64
 import json
+from .fmp_service import fmp_service
 import yfinance as yf
 import pandas as pd
 import numpy as np
@@ -108,7 +109,36 @@ def yfinance_daily_data(ticker: str) -> str:
         df = stock.history(period="5d", interval="1d")
         
         if df is None or df.empty:
-            return json.dumps({'error': 'No data available'})
+            # Fallback to FMP if Yahoo returns no data (e.g., provider/network restrictions)
+            try:
+                fmp_df = fmp_service.get_historical_price_data(ticker, period='6mo')
+                if fmp_df is None or fmp_df.empty:
+                    return json.dumps({'error': 'No data available'})
+
+                # Use the most recent 5 trading days
+                fmp_recent = fmp_df.tail(5).copy()
+                fmp_recent.reset_index(inplace=True)
+                data = []
+                for _, row in fmp_recent.iterrows():
+                    # Ensure required fields exist and are valid
+                    required_fields = ['close', 'open', 'high', 'low', 'volume']
+                    if all(field in row and pd.notna(row[field]) for field in required_fields):
+                        if all(float(row[field]) > 0 for field in ['close', 'open', 'high', 'low']) and int(row['volume']) >= 0:
+                            data.append({
+                                "date": row["date"].strftime("%Y-%m-%d"),
+                                "close": round(float(row["close"]), 2),
+                                "open": round(float(row["open"]), 2),
+                                "high": round(float(row["high"]), 2),
+                                "low": round(float(row["low"]), 2),
+                                "volume": int(row["volume"])
+                            })
+
+                if not data:
+                    return json.dumps({'error': 'No valid data found'})
+
+                return json.dumps(data)
+            except Exception as fallback_err:
+                return json.dumps({'error': f'No data available (fallback failed: {str(fallback_err)})'})
         
         df.reset_index(inplace=True)
         data = []

@@ -1,3 +1,122 @@
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from django.utils.timezone import now
+import json
+from .services.yfinance_service import get_ticker_from_request
+from .services.fmp_service import fmp_service
+from ai_models.config import AZURE_OPENAI_KEY, MODEL_NAME, AZURE_OPENAI_ENDPOINT
+from openai import AzureOpenAI
+
+
+@csrf_exempt
+def price_change_percent_view(request):
+    """Return only percentage change for the current day for a ticker."""
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=400)
+    ticker = request.GET.get('ticker', '').strip().upper()
+    if not ticker:
+        return JsonResponse({'error': 'ticker is required'}, status=400)
+
+    try:
+        quote = fmp_service.get_stock_quote(ticker)
+        # FMP quote has changePercent as a percentage value (e.g., 1.23 for +1.23%)
+        if not quote or 'changesPercentage' not in quote:
+            # fallback compute from today's open/price if available
+            price = quote.get('price') if quote else None
+            open_price = quote.get('open') if quote else None
+            if price and open_price and open_price != 0:
+                pct = round((price - open_price) / open_price * 100, 2)
+            else:
+                return JsonResponse({'error': 'quote unavailable'}, status=503)
+        else:
+            # changesPercentage may include percent sign; normalize
+            raw = quote['changesPercentage']
+            if isinstance(raw, str):
+                raw = raw.replace('%', '').replace('+', '').strip()
+                pct = round(float(raw), 2)
+            else:
+                pct = round(float(raw), 2)
+
+        return JsonResponse({'percent_change': pct})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def price_target_view(request):
+    """Return an AI-generated price target using FMP fundamentals and quote."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=400)
+    try:
+        data = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'invalid json'}, status=400)
+
+    ticker = (data.get('ticker') or '').strip().upper()
+    if not ticker:
+        return JsonResponse({'error': 'ticker is required'}, status=400)
+
+    try:
+        # Gather FMP data
+        quote = fmp_service.get_stock_quote(ticker)
+        profile = fmp_service.get_company_profile(ticker)
+        hist = fmp_service.get_historical_price_data(ticker, period='1y')
+
+        # Basic features
+        current_price = quote.get('price') if quote else None
+        pe = profile.get('pe') if profile else None
+        sector = profile.get('sector') if profile else None
+        beta = profile.get('beta') if profile else None
+
+        last_close = float(hist['close'].iloc[-1]) if not hist.empty else None
+        avg_30d = float(hist['close'].tail(30).mean()) if not hist.empty else None
+
+        # Ensure OpenAI configured
+        if not all([AZURE_OPENAI_KEY, MODEL_NAME, AZURE_OPENAI_ENDPOINT]):
+            return JsonResponse({'error': 'OpenAI not configured'}, status=503)
+
+        client = AzureOpenAI(api_key=AZURE_OPENAI_KEY, api_version="2023-05-15", azure_endpoint=AZURE_OPENAI_ENDPOINT)
+        prompt = f"""
+You are an equity research analyst. Propose a 6-12 month price target for {ticker}.
+Use the data below and output ONLY valid JSON with keys price_target (float) and rationale (string).
+
+Data:
+- current_price: {current_price}
+- last_close: {last_close}
+- 30d_avg_close: {avg_30d}
+- pe: {pe}
+- beta: {beta}
+- sector: {sector}
+"""
+
+        response = client.chat.completions.create(
+            model=MODEL_NAME,
+            messages=[
+                {"role": "system", "content": "You are a concise equity research model. Output only JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2
+        )
+
+        content = response.choices[0].message.content.strip()
+        # Extract JSON
+        import re, json as pyjson
+        if '```' in content:
+            m = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', content)
+            content = m.group(1) if m else content
+        try:
+            result = pyjson.loads(content)
+        except Exception:
+            # Fallback minimal
+            result = {"price_target": current_price, "rationale": "Model parsing fallback."}
+
+        # Normalize output
+        pt = float(result.get('price_target', current_price or 0))
+        rationale = result.get('rationale', 'N/A')
+        return JsonResponse({"ticker": ticker, "price_target": round(pt, 2), "rationale": rationale})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
 # internal
 from financial_data.services.charles_schwab_service import (
     charles_schwab_api, charles_schwab_callback, charles_schwab_refresh_token, charles_schwab_price_data,
