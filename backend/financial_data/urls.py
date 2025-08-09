@@ -78,4 +78,6 @@ urlpatterns = [
     # NYSE Stocks endpoints
     path('nyse/stocks/', views.nyse_stocks_view, name='nyse_stocks'),
     path('nyse/correlation/', views.stock_correlation_view, name='stock_correlation'),
+    # Trending assets
+    path('trending/', views.trending_assets_view, name='trending_assets'),
 ] 

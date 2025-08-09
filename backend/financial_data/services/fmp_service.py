@@ -171,5 +171,38 @@ class FMPService:
             print(f"Error fetching intraday {interval} data for {ticker}: {str(e)}")
             return pd.DataFrame()
 
+    def get_most_active_stocks(self, limit: int = 20) -> List[Dict]:
+        """
+        Get list of most active stocks (by volume) from FMP.
+
+        Args:
+            limit: Max number of items to return
+
+        Returns:
+            List of dicts with keys: symbol, name, price, change, changesPercentage, volume
+        """
+        try:
+            url = f"{self.base_url}/actives"
+            params = {
+                'apikey': self.api_key
+            }
+            response = requests.get(url, params=params)
+            response.raise_for_status()
+            data = response.json() or []
+            trimmed = []
+            for item in data[:limit]:
+                trimmed.append({
+                    'symbol': item.get('ticker') or item.get('symbol'),
+                    'name': item.get('companyName') or item.get('name'),
+                    'price': item.get('price'),
+                    'change': item.get('changes') or item.get('change'),
+                    'changesPercentage': item.get('changesPercentage'),
+                    'volume': item.get('volume')
+                })
+            return trimmed
+        except Exception as e:
+            print(f"Error fetching most active stocks: {str(e)}")
+            return []
+
 # Global FMP service instance
 fmp_service = FMPService() 

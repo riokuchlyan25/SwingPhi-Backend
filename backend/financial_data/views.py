@@ -565,3 +565,45 @@ def fmp_hourly_view(request):
         return JsonResponse({'ticker': ticker, 'data': data})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def trending_assets_view(request):
+    """Get trending stocks (FMP most actives) and trending crypto (CoinGecko)."""
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=400)
+    try:
+        # Trending stocks from FMP (most actives)
+        stocks = fmp_service.get_most_active_stocks(limit=20)
+
+        # Trending crypto from CoinGecko simple/markets endpoint
+        import requests
+        crypto = []
+        try:
+            cg_url = 'https://api.coingecko.com/api/v3/coins/markets'
+            params = {
+                'vs_currency': 'usd',
+                'order': 'gecko_desc',
+                'per_page': 20,
+                'page': 1,
+                'sparkline': 'false',
+                'price_change_percentage': '24h'
+            }
+            resp = requests.get(cg_url, params=params, timeout=10)
+            if resp.ok:
+                data = resp.json() or []
+                for item in data:
+                    crypto.append({
+                        'symbol': item.get('symbol', '').upper(),
+                        'name': item.get('name'),
+                        'price': item.get('current_price'),
+                        'change24h': item.get('price_change_percentage_24h'),
+                        'market_cap': item.get('market_cap'),
+                        'volume': item.get('total_volume')
+                    })
+        except Exception:
+            crypto = []
+
+        return JsonResponse({'stocks': stocks, 'crypto': crypto})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

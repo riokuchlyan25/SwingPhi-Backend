@@ -113,6 +113,28 @@ curl -X POST "https://swingphi-backend-amn1.onrender.com/financial_data/fmp/hour
   -d '{"ticker": "AAPL"}'
 ```
 
+### Trending Stocks and Crypto
+
+```bash
+# Get trending assets (stocks via FMP actives, crypto via CoinGecko)
+curl -X GET "https://swingphi-backend-amn1.onrender.com/financial_data/trending/"
+```
+
+Response example:
+
+```json
+{
+  "stocks": [
+    {"symbol": "AAPL", "name": "Apple Inc.", "price": 225.1, "change": -1.2, "changesPercentage": -0.53, "volume": 51234567},
+    {"symbol": "NVDA", "name": "NVIDIA Corporation", "price": 123.4, "change": 3.2, "changesPercentage": 2.67, "volume": 43210987}
+  ],
+  "crypto": [
+    {"symbol": "BTC", "name": "Bitcoin", "price": 70500, "change24h": 1.5, "market_cap": 1.38e12, "volume": 2.1e10},
+    {"symbol": "ETH", "name": "Ethereum", "price": 3800, "change24h": -0.7, "market_cap": 4.5e11, "volume": 1.2e10}
+  ]
+}
+```
+
 ```bash
 curl -X POST "https://swingphi-backend-amn1.onrender.com/financial_data/yfinance/max/" \
   -H "Content-Type: application/json" \
