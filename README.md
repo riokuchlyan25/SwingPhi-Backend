@@ -84,6 +84,35 @@ curl -X POST "https://swingphi-backend-amn1.onrender.com/financial_data/yfinance
 ```
 
 ### YFinance Maximum Historical Stock Data
+### FMP OHLCV Stock Data
+
+```bash
+# FMP Daily (last 5 trading days)
+curl -X POST "https://swingphi-backend-amn1.onrender.com/financial_data/fmp/daily/" \
+  -H "Content-Type: application/json" \
+  -d '{"ticker": "AAPL"}'
+
+# FMP Weekly (aggregated, last ~12 weeks)
+curl -X POST "https://swingphi-backend-amn1.onrender.com/financial_data/fmp/weekly/" \
+  -H "Content-Type: application/json" \
+  -d '{"ticker": "AAPL"}'
+
+# FMP Monthly (aggregated, last ~24 months)
+curl -X POST "https://swingphi-backend-amn1.onrender.com/financial_data/fmp/monthly/" \
+  -H "Content-Type: application/json" \
+  -d '{"ticker": "AAPL"}'
+
+# FMP Yearly (aggregated, last ~10 years)
+curl -X POST "https://swingphi-backend-amn1.onrender.com/financial_data/fmp/yearly/" \
+  -H "Content-Type: application/json" \
+  -d '{"ticker": "AAPL"}'
+
+# FMP Hourly (intraday 1-hour bars, up to ~200 bars)
+curl -X POST "https://swingphi-backend-amn1.onrender.com/financial_data/fmp/hourly/" \
+  -H "Content-Type: application/json" \
+  -d '{"ticker": "AAPL"}'
+```
+
 ```bash
 curl -X POST "https://swingphi-backend-amn1.onrender.com/financial_data/yfinance/max/" \
   -H "Content-Type: application/json" \

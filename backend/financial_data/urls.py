@@ -49,6 +49,12 @@ urlpatterns = [
     path('yfinance/yearly/', views.yfinance_yearly_view, name='yfinance_yearly'),
     path('yfinance/max/', views.yfinance_max_view, name='yfinance_max'),
     path('yfinance/price_change/', views.yfinance_price_change_view, name='yfinance_price_change'),
+    # FMP OHLCV endpoints
+    path('fmp/daily/', views.fmp_daily_view, name='fmp_daily'),
+    path('fmp/weekly/', views.fmp_weekly_view, name='fmp_weekly'),
+    path('fmp/monthly/', views.fmp_monthly_view, name='fmp_monthly'),
+    path('fmp/yearly/', views.fmp_yearly_view, name='fmp_yearly'),
+    path('fmp/hourly/', views.fmp_hourly_view, name='fmp_hourly'),
     # SEC endpoints for filings data
     path('sec/filings/', views.sec_filings_view, name='sec_filings'),
     path('sec/company_facts/', views.sec_company_facts_view, name='sec_company_facts'),

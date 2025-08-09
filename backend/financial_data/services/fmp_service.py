@@ -121,5 +121,55 @@ class FMPService:
             print(f"Error fetching stock quote for {ticker}: {str(e)}")
             return {}
 
+    def get_intraday_price_data(self, ticker: str, interval: str = "1hour", limit: int = 200) -> pd.DataFrame:
+        """
+        Get intraday OHLCV data for a ticker at a specified interval.
+
+        Args:
+            ticker: Stock ticker symbol
+            interval: One of ['1min','5min','15min','30min','1hour','4hour']
+            limit: Maximum number of data points to return
+
+        Returns:
+            DataFrame with datetime index and columns: open, high, low, close, volume
+        """
+        try:
+            supported = {"1min", "5min", "15min", "30min", "1hour", "4hour"}
+            if interval not in supported:
+                interval = "1hour"
+
+            url = f"{self.base_url}/historical-chart/{interval}/{ticker}"
+            params = {
+                'apikey': self.api_key
+            }
+
+            response = requests.get(url, params=params)
+            response.raise_for_status()
+            data = response.json() or []
+
+            if not data:
+                return pd.DataFrame()
+
+            # FMP returns most recent first; trim and reverse to chronological
+            data = data[:limit]
+            df = pd.DataFrame(data)
+            # Normalize columns to lower-case
+            df.columns = [c.lower() for c in df.columns]
+
+            # Expect keys: date, open, high, low, close, volume
+            if 'date' not in df.columns:
+                return pd.DataFrame()
+
+            df['date'] = pd.to_datetime(df['date'])
+            df = df.sort_values('date').set_index('date')
+
+            # Keep standard columns if present
+            keep_cols = [c for c in ['open', 'high', 'low', 'close', 'volume'] if c in df.columns]
+            df = df[keep_cols]
+            return df
+        except Exception as e:
+            print(f"Error fetching intraday {interval} data for {ticker}: {str(e)}")
+            return pd.DataFrame()
+
 # Global FMP service instance
 fmp_service = FMPService() 

@@ -2,6 +2,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.utils.timezone import now
 import json
+import pandas as pd
 from .services.yfinance_service import get_ticker_from_request
 from .services.fmp_service import fmp_service
 from ai_models.config import AZURE_OPENAI_KEY, MODEL_NAME, AZURE_OPENAI_ENDPOINT
@@ -374,3 +375,193 @@ def stock_correlation_view(request):
     """Get correlation between two stocks from the NYSE list"""
     return get_stock_correlation_api(request)
 
+
+@csrf_exempt
+def fmp_daily_view(request):
+    """Get last 5 daily candles from FMP for a ticker."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=400)
+    ticker = get_ticker_from_request(request)
+    if not ticker:
+        return JsonResponse({'error': 'Ticker required'}, status=400)
+    try:
+        df = fmp_service.get_historical_price_data(ticker, period='6mo')
+        if df is None or df.empty:
+            return JsonResponse({'error': 'No data available'}, status=503)
+        recent = df.tail(5).copy()
+        recent = recent[['open', 'high', 'low', 'close', 'volume']]
+        recent.index = pd.to_datetime(recent.index)
+        recent = recent.reset_index().rename(columns={'index': 'date'})
+        data = [
+            {
+                'date': row['date'].strftime('%Y-%m-%d'),
+                'open': round(float(row['open']), 2),
+                'high': round(float(row['high']), 2),
+                'low': round(float(row['low']), 2),
+                'close': round(float(row['close']), 2),
+                'volume': int(row['volume']) if pd.notna(row['volume']) else 0,
+            }
+            for _, row in recent.iterrows()
+            if pd.notna(row['open']) and pd.notna(row['high']) and pd.notna(row['low']) and pd.notna(row['close'])
+        ]
+        if not data:
+            return JsonResponse({'error': 'No valid data found'}, status=503)
+        return JsonResponse({'ticker': ticker, 'data': data})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def fmp_weekly_view(request):
+    """Get weekly OHLCV aggregated candles from FMP (last ~12 weeks)."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=400)
+    ticker = get_ticker_from_request(request)
+    if not ticker:
+        return JsonResponse({'error': 'Ticker required'}, status=400)
+    try:
+        df = fmp_service.get_historical_price_data(ticker, period='6mo')
+        if df is None or df.empty:
+            return JsonResponse({'error': 'No data available'}, status=503)
+        daily = df[['open', 'high', 'low', 'close', 'volume']].copy()
+        daily.index = pd.to_datetime(daily.index)
+        weekly = pd.DataFrame({
+            'open': daily['open'].resample('W-FRI').first(),
+            'high': daily['high'].resample('W-FRI').max(),
+            'low': daily['low'].resample('W-FRI').min(),
+            'close': daily['close'].resample('W-FRI').last(),
+            'volume': daily['volume'].resample('W-FRI').sum(),
+        }).dropna()
+        weekly = weekly.tail(12).reset_index().rename(columns={'date': 'Date'})
+        data = [
+            {
+                'date': row['index'].strftime('%Y-%m-%d'),
+                'open': round(float(row['open']), 2),
+                'high': round(float(row['high']), 2),
+                'low': round(float(row['low']), 2),
+                'close': round(float(row['close']), 2),
+                'volume': int(row['volume']) if pd.notna(row['volume']) else 0,
+            }
+            for _, row in weekly.iterrows()
+        ]
+        if not data:
+            return JsonResponse({'error': 'No valid data found'}, status=503)
+        return JsonResponse({'ticker': ticker, 'data': data})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def fmp_monthly_view(request):
+    """Get monthly OHLCV aggregated candles from FMP (last ~24 months)."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=400)
+    ticker = get_ticker_from_request(request)
+    if not ticker:
+        return JsonResponse({'error': 'Ticker required'}, status=400)
+    try:
+        df = fmp_service.get_historical_price_data(ticker, period='5y')
+        if df is None or df.empty:
+            return JsonResponse({'error': 'No data available'}, status=503)
+        daily = df[['open', 'high', 'low', 'close', 'volume']].copy()
+        daily.index = pd.to_datetime(daily.index)
+        monthly = pd.DataFrame({
+            'open': daily['open'].resample('M').first(),
+            'high': daily['high'].resample('M').max(),
+            'low': daily['low'].resample('M').min(),
+            'close': daily['close'].resample('M').last(),
+            'volume': daily['volume'].resample('M').sum(),
+        }).dropna()
+        monthly = monthly.tail(24).reset_index()
+        data = [
+            {
+                'date': row['date'].strftime('%Y-%m-%d') if 'date' in monthly.columns else row['index'].strftime('%Y-%m-%d'),
+                'open': round(float(row['open']), 2),
+                'high': round(float(row['high']), 2),
+                'low': round(float(row['low']), 2),
+                'close': round(float(row['close']), 2),
+                'volume': int(row['volume']) if pd.notna(row['volume']) else 0,
+            }
+            for _, row in monthly.iterrows()
+        ]
+        if not data:
+            return JsonResponse({'error': 'No valid data found'}, status=503)
+        return JsonResponse({'ticker': ticker, 'data': data})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def fmp_yearly_view(request):
+    """Get yearly OHLCV aggregated candles from FMP (last ~10 years)."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=400)
+    ticker = get_ticker_from_request(request)
+    if not ticker:
+        return JsonResponse({'error': 'Ticker required'}, status=400)
+    try:
+        df = fmp_service.get_historical_price_data(ticker, period='max')
+        if df is None or df.empty:
+            return JsonResponse({'error': 'No data available'}, status=503)
+        daily = df[['open', 'high', 'low', 'close', 'volume']].copy()
+        daily.index = pd.to_datetime(daily.index)
+        yearly = pd.DataFrame({
+            'open': daily['open'].resample('Y').first(),
+            'high': daily['high'].resample('Y').max(),
+            'low': daily['low'].resample('Y').min(),
+            'close': daily['close'].resample('Y').last(),
+            'volume': daily['volume'].resample('Y').sum(),
+        }).dropna()
+        yearly = yearly.tail(10).reset_index()
+        data = [
+            {
+                'date': row['date'].strftime('%Y-%m-%d') if 'date' in yearly.columns else row['index'].strftime('%Y-%m-%d'),
+                'open': round(float(row['open']), 2),
+                'high': round(float(row['high']), 2),
+                'low': round(float(row['low']), 2),
+                'close': round(float(row['close']), 2),
+                'volume': int(row['volume']) if pd.notna(row['volume']) else 0,
+            }
+            for _, row in yearly.iterrows()
+        ]
+        if not data:
+            return JsonResponse({'error': 'No valid data found'}, status=503)
+        return JsonResponse({'ticker': ticker, 'data': data})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def fmp_hourly_view(request):
+    """Get intraday OHLCV data at 1-hour interval from FMP (up to ~200 bars)."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=400)
+    ticker = get_ticker_from_request(request)
+    if not ticker:
+        return JsonResponse({'error': 'Ticker required'}, status=400)
+    try:
+        df = fmp_service.get_intraday_price_data(ticker, interval='1hour', limit=200)
+        if df is None or df.empty:
+            return JsonResponse({'error': 'No data available'}, status=503)
+
+        df = df[['open', 'high', 'low', 'close', 'volume']].copy()
+        df.index = pd.to_datetime(df.index)
+        df = df.reset_index().rename(columns={'index': 'date'})
+
+        data = [
+            {
+                'date': row['date'].strftime('%Y-%m-%d %H:%M:%S'),
+                'open': round(float(row['open']), 2),
+                'high': round(float(row['high']), 2),
+                'low': round(float(row['low']), 2),
+                'close': round(float(row['close']), 2),
+                'volume': int(row['volume']) if pd.notna(row['volume']) else 0,
+            }
+            for _, row in df.iterrows()
+            if pd.notna(row['open']) and pd.notna(row['high']) and pd.notna(row['low']) and pd.notna(row['close'])
+        ]
+        if not data:
+            return JsonResponse({'error': 'No valid data found'}, status=503)
+        return JsonResponse({'ticker': ticker, 'data': data})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
