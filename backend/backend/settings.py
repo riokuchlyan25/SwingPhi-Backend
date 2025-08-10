@@ -151,7 +151,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
-    'https://your-frontend-domain.onrender.com',  # Replace with your frontend domain
+    'https://your-frontend-domain.onrender.com',
+    'http://localhost:3000',
+        # Replace with your frontend domain
 ]
 
 # Add environment variable for frontend URL
