@@ -111,6 +111,11 @@ curl -X POST "https://swingphi-backend-amn1.onrender.com/financial_data/fmp/year
 curl -X POST "https://swingphi-backend-amn1.onrender.com/financial_data/fmp/hourly/" \
   -H "Content-Type: application/json" \
   -d '{"ticker": "AAPL"}'
+
+# FMP Current Hour (1-minute bars for the latest hour window)
+curl -X POST "https://swingphi-backend-amn1.onrender.com/financial_data/fmp/minute_current_hour/" \
+  -H "Content-Type: application/json" \
+  -d '{"ticker": "AAPL"}'
 ```
 
 ### Trending Stocks and Crypto

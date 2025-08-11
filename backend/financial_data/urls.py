@@ -55,6 +55,7 @@ urlpatterns = [
     path('fmp/monthly/', views.fmp_monthly_view, name='fmp_monthly'),
     path('fmp/yearly/', views.fmp_yearly_view, name='fmp_yearly'),
     path('fmp/hourly/', views.fmp_hourly_view, name='fmp_hourly'),
+    path('fmp/minute_current_hour/', views.fmp_minute_current_hour_view, name='fmp_minute_current_hour'),
     # SEC endpoints for filings data
     path('sec/filings/', views.sec_filings_view, name='sec_filings'),
     path('sec/company_facts/', views.sec_company_facts_view, name='sec_company_facts'),

@@ -171,6 +171,31 @@ class FMPService:
             print(f"Error fetching intraday {interval} data for {ticker}: {str(e)}")
             return pd.DataFrame()
 
+    def get_free_float(self, ticker: str) -> Optional[float]:
+        """
+        Get free float shares count for a ticker if available.
+
+        Returns float number of shares (not percentage). May return None if unavailable.
+        """
+        try:
+            url = f"{self.base_url}/shares_float/{ticker}"
+            params = {'apikey': self.api_key}
+            response = requests.get(url, params=params)
+            response.raise_for_status()
+            data = response.json() or []
+            if isinstance(data, list) and data:
+                item = data[0]
+                # Try common keys
+                return (
+                    item.get('freeFloat')
+                    or item.get('floatShares')
+                    or item.get('float')
+                )
+            return None
+        except Exception as e:
+            print(f"Error fetching free float for {ticker}: {str(e)}")
+            return None
+
     def get_most_active_stocks(self, limit: int = 20) -> List[Dict]:
         """
         Get list of most active stocks (by volume) from FMP.

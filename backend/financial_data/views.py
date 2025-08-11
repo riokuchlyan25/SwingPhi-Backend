@@ -607,3 +607,49 @@ def trending_assets_view(request):
         return JsonResponse({'stocks': stocks, 'crypto': crypto})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def fmp_minute_current_hour_view(request):
+    """Get 1-minute OHLCV bars for the current hour window (based on latest data timestamp)."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=400)
+    ticker = get_ticker_from_request(request)
+    if not ticker:
+        return JsonResponse({'error': 'Ticker required'}, status=400)
+    try:
+        # Fetch up to ~500 most recent 1-minute bars
+        df = fmp_service.get_intraday_price_data(ticker, interval='1min', limit=500)
+        if df is None or df.empty:
+            return JsonResponse({'error': 'No data available'}, status=503)
+
+        df.index = pd.to_datetime(df.index)
+        latest_ts = pd.to_datetime(df.index.max())
+        window_start = latest_ts.floor('H')
+        window_end = window_start + pd.Timedelta(hours=1)
+        current_hour = df[(df.index >= window_start) & (df.index < window_end)].copy()
+
+        if current_hour.empty:
+            return JsonResponse({'error': 'No data available for current hour'}, status=503)
+
+        current_hour = current_hour[['open', 'high', 'low', 'close', 'volume']].reset_index().rename(columns={'index': 'date'})
+
+        data = [
+            {
+                'date': row['date'].strftime('%Y-%m-%d %H:%M:%S'),
+                'open': round(float(row['open']), 4),
+                'high': round(float(row['high']), 4),
+                'low': round(float(row['low']), 4),
+                'close': round(float(row['close']), 4),
+                'volume': int(row['volume']) if pd.notna(row['volume']) else 0,
+            }
+            for _, row in current_hour.iterrows()
+            if pd.notna(row['open']) and pd.notna(row['high']) and pd.notna(row['low']) and pd.notna(row['close'])
+        ]
+
+        if not data:
+            return JsonResponse({'error': 'No valid data found'}, status=503)
+
+        return JsonResponse({'ticker': ticker, 'window_start': window_start.strftime('%Y-%m-%d %H:%M:%S'), 'data': data})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

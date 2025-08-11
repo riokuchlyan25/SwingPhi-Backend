@@ -1,5 +1,6 @@
 # internal
 from ai_models.config import AZURE_OPENAI_KEY, MODEL_NAME, AZURE_OPENAI_ENDPOINT
+from financial_data.services.fmp_service import fmp_service
 
 # external
 from openai import AzureOpenAI
@@ -38,14 +39,50 @@ def chatgpt_api(request):
             else:
                 analysis_prompt = prompt
             
+            # Try to interpret the prompt as a symbol to enrich with fundamentals
+            symbol_candidate = (prompt or '').strip().upper()
+            avg_volume = None
+            market_cap = None
+            free_float = None
+            try:
+                # FMP quote and profile for volume and market cap
+                quote = fmp_service.get_stock_quote(symbol_candidate)
+                profile = fmp_service.get_company_profile(symbol_candidate)
+                # Average volume: prefer profile avgVolume, fallback to quote volume
+                avg_volume = (
+                    profile.get('volAvg')
+                    or profile.get('avgVolume')
+                    or quote.get('avgVolume')
+                    or quote.get('volume')
+                ) if isinstance(profile, dict) and isinstance(quote, dict) else None
+                # Market cap
+                market_cap = (
+                    profile.get('mktCap')
+                    or profile.get('marketCap')
+                    or quote.get('marketCap')
+                ) if isinstance(profile, dict) and isinstance(quote, dict) else None
+                # Free float
+                free_float = fmp_service.get_free_float(symbol_candidate)
+            except Exception:
+                pass
+
             response = client.chat.completions.create(
                 model=MODEL_NAME,
                 messages=[{"role": "user", "content": analysis_prompt}]
             )
             
-            return JsonResponse({
+            result = {
                 'response': response.choices[0].message.content
-            })
+            }
+            # Attach fundamentals if we appear to be analyzing a ticker
+            if len(symbol_candidate) > 0 and symbol_candidate.isalnum():
+                result.update({
+                    'symbol': symbol_candidate,
+                    'average_volume': avg_volume,
+                    'market_cap': market_cap,
+                    'free_float': free_float
+                })
+            return JsonResponse(result)
             
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
