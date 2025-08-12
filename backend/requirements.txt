@@ -5,6 +5,7 @@ dj-database-url==2.1.0
 whitenoise==6.6.0
 python-dotenv==1.1.0
 requests==2.32.3
+psycopg2-binary==2.9.9
 
 # AI/ML packages
 openai==1.95.1
