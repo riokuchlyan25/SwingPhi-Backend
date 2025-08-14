@@ -4,6 +4,7 @@ from .robinhood_service import RobinhoodService
 from .charles_schwab_service import CharlesSchwabService
 from .fidelity_service import FidelityService
 from .ibkr_service import IBKRService
+from .ibkr_tws_service import IBKRTWSService
 from .moomoo_service import MoomooService
 from .sofi_service import SoFiService
 from .etrade_service import ETradeService
@@ -22,6 +23,7 @@ class BrokerageServiceFactory:
         'charles_schwab': CharlesSchwabService,
         'fidelity': FidelityService,
         'ibkr': IBKRService,
+        'ibkr_tws': IBKRTWSService,
         'moomoo': MoomooService,
         'sofi': SoFiService,
         'etrade': ETradeService,
@@ -79,6 +81,13 @@ class BrokerageServiceFactory:
                 'auth_method': 'client_portal_or_tws',
                 'api_documentation': 'https://www.interactivebrokers.com/en/trading/ib-api.php',
                 'notes': 'Use Client Portal REST or TWS API (ibapi) with Gateway/TWS running.'
+            },
+            'ibkr_tws': {
+                'required_fields': [],
+                'optional_fields': ['host', 'port', 'client_id'],
+                'auth_method': 'tws_gateway',
+                'api_documentation': 'https://www.interactivebrokers.com/en/trading/ib-api.php',
+                'notes': 'Requires TWS or Gateway running locally. Default: localhost:7497 (TWS) or localhost:4001 (Gateway).'
             },
             'fidelity': {
                 'required_fields': [],

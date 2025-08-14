@@ -642,6 +642,225 @@ curl -X GET "https://swingphi-backend-amn1.onrender.com/brokerage_integrations/b
 curl -X GET "https://swingphi-backend-amn1.onrender.com/brokerage_integrations/brokerages/coinbase/data/?api_key=YOUR_KEY&secret_key=YOUR_SECRET&passphrase=YOUR_PASSPHRASE"
 ```
 
+## IBKR TWS API Integration - Real-time Trading Data
+
+The IBKR TWS API provides direct access to Interactive Brokers' Trader Workstation (TWS) or Gateway for real-time account data, market information, and order execution.
+
+### Prerequisites
+- TWS or Gateway must be running locally
+- API connections enabled in TWS settings (port 7497 for TWS, 4001 for Gateway)
+- User must be logged into TWS/Gateway
+
+### Get TWS Connection Status
+```bash
+# Check if TWS/Gateway is accessible
+curl -X GET "https://swingphi-backend-amn1.onrender.com/brokerage_integrations/tws/status/?host=127.0.0.1&port=7497&client_id=1"
+```
+
+### Get TWS Account Information
+```bash
+# Get basic account information from TWS
+curl -X GET "https://swingphi-backend-amn1.onrender.com/brokerage_integrations/tws/account/?host=127.0.0.1&port=7497&client_id=1"
+```
+
+### Get TWS Account Balance
+```bash
+# Get account balance and financial summary
+curl -X GET "https://swingphi-backend-amn1.onrender.com/brokerage_integrations/tws/balance/?host=127.0.0.1&port=7497&client_id=1"
+```
+
+### Get TWS Portfolio Positions
+```bash
+# Get current portfolio positions with real-time data
+curl -X GET "https://swingphi-backend-amn1.onrender.com/brokerage_integrations/tws/portfolio/?host=127.0.0.1&port=7497&client_id=1"
+```
+
+### Get TWS Market Data
+```bash
+# Get real-time market data for a specific symbol
+curl -X GET "https://swingphi-backend-amn1.onrender.com/brokerage_integrations/tws/market-data/?symbol=AAPL&host=127.0.0.1&port=7497&client_id=1"
+
+# Get market data with custom exchange and currency
+curl -X GET "https://swingphi-backend-amn1.onrender.com/brokerage_integrations/tws/market-data/?symbol=GOOGL&exchange=SMART&currency=USD&host=127.0.0.1&port=7497&client_id=1"
+```
+
+### Get TWS Open Orders
+```bash
+# Get all open orders in the account
+curl -X GET "https://swingphi-backend-amn1.onrender.com/brokerage_integrations/tws/orders/?host=127.0.0.1&port=7497&client_id=1"
+```
+
+### Place TWS Order
+```bash
+# Place a market buy order
+curl -X POST "https://swingphi-backend-amn1.onrender.com/brokerage_integrations/tws/place-order/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "symbol": "AAPL",
+    "action": "BUY",
+    "quantity": 10,
+    "order_type": "MKT",
+    "host": "127.0.0.1",
+    "port": 7497,
+    "client_id": 1
+  }'
+
+# Place a limit sell order
+curl -X POST "https://swingphi-backend-amn1.onrender.com/brokerage_integrations/tws/place-order/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "symbol": "AAPL",
+    "action": "SELL",
+    "quantity": 5,
+    "order_type": "LMT",
+    "limit_price": 150.00,
+    "host": "127.0.0.1",
+    "port": 7497,
+    "client_id": 1
+  }'
+
+# Place a stop loss order
+curl -X POST "https://swingphi-backend-amn1.onrender.com/brokerage_integrations/tws/place-order/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "symbol": "AAPL",
+    "action": "SELL",
+    "quantity": 10,
+    "order_type": "STP",
+    "stop_price": 140.00,
+    "host": "127.0.0.1",
+    "port": 7497,
+    "client_id": 1
+  }'
+```
+
+### Cancel TWS Order
+```bash
+# Cancel an existing order by order ID
+curl -X POST "https://swingphi-backend-amn1.onrender.com/brokerage_integrations/tws/cancel-order/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "order_id": 12345,
+    "host": "127.0.0.1",
+    "port": 7497,
+    "client_id": 1
+  }'
+```
+
+### Get TWS Account Summary (Comprehensive)
+```bash
+# Get comprehensive account summary including all data
+curl -X GET "https://swingphi-backend-amn1.onrender.com/brokerage_integrations/tws/summary/?host=127.0.0.1&port=7497&client_id=1"
+```
+
+**TWS API Response Examples:**
+
+**Account Information:**
+```json
+{
+  "success": true,
+  "data": {
+    "account_id": "U123456",
+    "account_name": "IBKR Account",
+    "account_type": "Individual",
+    "currency": "USD",
+    "trading_permissions": ["STK", "OPT", "FUT"],
+    "connected": true
+  }
+}
+```
+
+**Account Balance:**
+```json
+{
+  "success": true,
+  "data": {
+    "cash_balance": 15000.00,
+    "total_value": 125000.00,
+    "buying_power": 50000.00,
+    "available_funds": 15000.00,
+    "gross_position_value": 110000.00,
+    "account_id": "U123456"
+  }
+}
+```
+
+**Portfolio Positions:**
+```json
+{
+  "success": true,
+  "data": {
+    "positions": [
+      {
+        "symbol": "AAPL",
+        "exchange": "SMART",
+        "currency": "USD",
+        "quantity": 100.0,
+        "average_price": 150.00,
+        "current_price": 155.00,
+        "market_value": 15500.00,
+        "unrealized_pnl": 500.00,
+        "contract_id": 76792991,
+        "account_id": "U123456"
+      }
+    ],
+    "total_positions": 1
+  }
+}
+```
+
+**Market Data:**
+```json
+{
+  "success": true,
+  "data": {
+    "symbol": "AAPL",
+    "bid": 154.95,
+    "ask": 155.05,
+    "last": 155.00,
+    "high": 156.20,
+    "low": 153.80,
+    "volume": 45678900,
+    "timestamp": "2024-01-15T14:30:00Z"
+  }
+}
+```
+
+**Order Placement:**
+```json
+{
+  "success": true,
+  "data": {
+    "order_id": 12345,
+    "status": "Submitted",
+    "filled": 0,
+    "remaining": 10,
+    "avg_fill_price": null,
+    "symbol": "AAPL",
+    "action": "BUY",
+    "quantity": 10
+  }
+}
+```
+
+**Connection Parameters:**
+- `host`: TWS/Gateway host (default: 127.0.0.1)
+- `port`: TWS port 7497, Gateway port 4001 (default: 7497)
+- `client_id`: Unique client identifier (default: 1)
+
+**Order Types Supported:**
+- `MKT`: Market order
+- `LMT`: Limit order
+- `STP`: Stop order
+- `STP LMT`: Stop limit order
+- `TRAIL`: Trailing stop order
+
+**Security Notes:**
+- TWS API only works with local connections
+- Use read-only mode for data access only
+- Never store TWS credentials in code
+- Implement proper rate limiting
+
 **Response Format for Individual Brokerage Data:**
 ```json
 {
